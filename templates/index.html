@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sentinel AI — Binary Vulnerability Detection</title>
+  <meta name="description" content="AI-powered binary vulnerability detection using Ghidra reverse engineering and Random Forest machine learning." />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1f6e1;</text></svg>" />
+  
+  <!-- PDF Export Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+<!-- SPLASH SCREEN -->
+<div id="splashScreen" class="splash-screen">
+  <div class="splash-content">
+    <div class="splash-logo-container">
+      <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="splash-logo" style="animation: spin 8s linear infinite;">
+        <path d="M50 5L15 20V45C15 65 30 85 50 95C70 85 85 65 85 45V20L50 5Z" stroke="var(--text-primary)" stroke-width="4" stroke-linejoin="round"/>
+        <circle cx="50" cy="45" r="15" stroke="var(--accent-primary)" stroke-width="4"/>
+        <circle cx="50" cy="45" r="6" fill="var(--text-primary)"/>
+      </svg>
+    </div>
+    <div class="team-names" id="teamNamesContainer">
+      <div class="name-item" id="name1">Zeyad Ayman</div>
+      <div class="name-item" id="name2">Ziad Ahmed</div>
+      <div class="name-item" id="name3">Tariq Ali</div>
+      <div class="name-item" id="name4">Ahmed Mohamed</div>
+      <div class="name-item" id="name5">Adam Ahmed</div>
+      <div class="supervisor" id="supervisor">Supervised by DR: Shreif Eldyasti</div>
+    </div>
+    <div class="splash-progress">
+      <div class="splash-progress-bar" id="splashBar"></div>
+    </div>
+  </div>
+</div>
+
+<div class="app-container" id="appContainer" style="opacity: 0; display: none;">
+
+  <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+  </button>
+
+  <!-- HEADER -->
+  <header class="header reveal">
+    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="header__logo">
+      <path d="M50 5L15 20V45C15 65 30 85 50 95C70 85 85 65 85 45V20L50 5Z" stroke="var(--text-primary)" stroke-width="4" stroke-linejoin="round"/>
+      <circle cx="50" cy="45" r="15" stroke="var(--accent-primary)" stroke-width="4"/>
+      <circle cx="50" cy="45" r="6" fill="var(--text-primary)"/>
+    </svg>
+    <div class="header__text">
+      <div class="header__badge">
+        <span class="pulse-dot"></span>
+        System Online
+      </div>
+      <h1 class="header__title">Sentinel AI</h1>
+      <p class="header__subtitle">
+        Intelligent binary analysis. Powered by machine learning and reverse engineering.
+      </p>
+    </div>
+  </header>
+
+  <!-- TAB NAVIGATION -->
+  <nav class="tabs reveal" style="transition-delay: 0.1s;">
+    <button class="tab-btn active" data-tab="scanner">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Scanner
+    </button>
+    <button class="tab-btn" data-tab="intelligence">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+      Intelligence
+    </button>
+    <button class="tab-btn" data-tab="history">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      History
+    </button>
+    <button class="tab-btn" data-tab="docs">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      Documentation
+    </button>
+  </nav>
+
+  <!-- ========================================== -->
+  <!-- TAB CONTENT: SCANNER -->
+  <!-- ========================================== -->
+  <div class="tab-content active" id="tab-scanner">
+    
+    <!-- UPLOAD SECTION -->
+    <section class="upload-section reveal" id="uploadSection" style="transition-delay: 0.2s;">
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-zone__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-zone__title">Analyze Binary</div>
+        <div class="upload-zone__subtitle">Drop an executable file here or click to browse</div>
+        <div class="upload-zone__formats">
+          <span class="format-tag">.exe</span>
+          <span class="format-tag">.o</span>
+          <span class="format-tag">.elf</span>
+          <span class="format-tag">.dll</span>
+          <span class="format-tag">.so</span>
+          <span class="format-tag">.bin</span>
+        </div>
+        <input type="file" id="fileInput" class="upload-zone__input" accept=".exe,.o,.elf,.dll,.so,.bin" />
+      </div>
+
+      <!-- Selected File Info -->
+      <div class="file-info" id="fileInfo">
+        <div class="file-info__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="file-info__details">
+          <div class="file-info__name" id="fileName">—</div>
+          <div class="file-info__size" id="fileSize">—</div>
+        </div>
+        <button class="file-info__remove" id="removeFileBtn" title="Remove file">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <button class="analyze-btn" id="analyzeBtn" disabled>
+        <span>Start Analysis</span>
+      </button>
+    </section>
+
+    <!-- PROGRESS SECTION -->
+    <section class="progress-section" id="progressSection">
+      <div class="progress-card">
+        <div class="progress-card__header">
+          <div class="progress-spinner"></div>
+          <div class="progress-card__title" id="progressTitle">Analyzing binary structure...</div>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-steps">
+          <div class="progress-step" id="step1">
+            <div class="progress-step__icon">1</div>
+            <span>Uploading to inference engine</span>
+          </div>
+          <div class="progress-step" id="step2">
+            <div class="progress-step__icon">2</div>
+            <span>Decompiling via Ghidra framework</span>
+          </div>
+          <div class="progress-step" id="step3">
+            <div class="progress-step__icon">3</div>
+            <span>Extracting semantic opcodes</span>
+          </div>
+          <div class="progress-step" id="step4">
+            <div class="progress-step__icon">4</div>
+            <span>Evaluating risk via Random Forest</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTS SECTION -->
+    <section class="results-section" id="resultsSection">
+      
+      <!-- Container for PDF Export -->
+      <div id="pdfExportContainer" style="padding: 40px 20px; background: #ffffff;">
+        <div class="report-header" style="display:none; text-align:center; margin-bottom: 40px;">
+          <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 20px;">
+            <path d="M50 5L15 20V45C15 65 30 85 50 95C70 85 85 65 85 45V20L50 5Z" stroke="#1d1d1f" stroke-width="4" stroke-linejoin="round"/>
+            <circle cx="50" cy="45" r="15" stroke="#0071e3" stroke-width="4"/>
+            <circle cx="50" cy="45" r="6" fill="#1d1d1f"/>
+          </svg>
+          <h2 style="font-size: 32px; font-weight: 700; margin-bottom: 8px;">Sentinel AI Vulnerability Report</h2>
+          <p style="color: #86868b; font-size: 14px;" id="reportDate"></p>
+        </div>
+
+        <!-- Verdict Banner -->
+        <div class="verdict-banner reveal" id="verdictBanner">
+          <div class="verdict-banner__icon" id="verdictIcon"></div>
+          <div class="verdict-banner__title" id="verdictTitle">—</div>
+          <div class="verdict-banner__subtitle" id="verdictSubtitle">—</div>
+          <div class="confidence-meter">
+            <div class="confidence-meter__label">Threat Confidence Level</div>
+            <div class="confidence-meter__bar">
+              <div class="confidence-meter__fill" id="confidenceFill"></div>
+            </div>
+            <div class="confidence-meter__value" id="confidenceValue">—</div>
+          </div>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="details-grid">
+          <!-- File Details Card -->
+          <div class="detail-card reveal" style="transition-delay: 0.1s;">
+            <div class="detail-card__title">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Forensics
+            </div>
+            <div class="detail-row">
+              <span class="detail-row__label">Filename</span>
+              <span class="detail-row__value" id="resFilename">—</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-row__label">SHA-256</span>
+              <span class="detail-row__value hash-value" id="resSha256">—</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-row__label">Decompile Time</span>
+              <span class="detail-row__value" id="resGhidraTime">—</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-row__label">Inference Time</span>
+              <span class="detail-row__value" id="resMlTime">—</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-row__label">Total Scan Time</span>
+              <span class="detail-row__value" id="resTotalTime">—</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-row__label">Timestamp</span>
+              <span class="detail-row__value" id="resTimestamp">—</span>
+            </div>
+          </div>
+
+          <!-- Top Features Card (Logical Explanations) -->
+          <div class="detail-card reveal" style="transition-delay: 0.2s;">
+            <div class="detail-card__title">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+              Professional Threat Analysis
+            </div>
+            <div class="feature-list" id="featureList">
+              <div style="color: #86868b; font-size: 14px;">
+                Upload a binary to see the enterprise-grade logical breakdown of anomalies.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div> <!-- End PDF Container -->
+
+      <!-- Action Buttons -->
+      <div class="action-buttons reveal" style="transition-delay: 0.3s;">
+        <button class="btn btn--primary" id="newScanBtn">
+          New Analysis
+        </button>
+        <button class="btn btn--pdf" id="exportPdfBtn" style="display:none">
+          Export Professional Report (PDF)
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB CONTENT: INTELLIGENCE -->
+  <!-- ========================================== -->
+  <div class="tab-content" id="tab-intelligence">
+    <h2 class="section-title reveal">Intelligence Metrics</h2>
+    
+    <div class="stats-bar" id="statsBar">
+      <div class="stat-card reveal">
+        <div class="stat-card__value" id="statAccuracy">--</div>
+        <div class="stat-card__label">Accuracy</div>
+      </div>
+      <div class="stat-card reveal" style="transition-delay: 0.1s;">
+        <div class="stat-card__value" id="statSamples">--</div>
+        <div class="stat-card__label">Samples</div>
+      </div>
+      <div class="stat-card reveal" style="transition-delay: 0.2s;">
+        <div class="stat-card__value" id="statTrees">--</div>
+        <div class="stat-card__label">Trees</div>
+      </div>
+      <div class="stat-card reveal" style="transition-delay: 0.3s;">
+        <div class="stat-card__value" id="statStatus">--</div>
+        <div class="stat-card__label">Status</div>
+      </div>
+    </div>
+
+    <div class="intelligence-info reveal">
+      <h3>Engine Architecture</h3>
+      <p>Sentinel AI leverages a robust pipeline tailored for enterprise-grade security:</p>
+      <ul>
+        <li><strong>Dataset:</strong> Juliet Test Suite for robust, varied C/C++ vulnerability paradigms.</li>
+        <li><strong>Balancing:</strong> SMOTE ensures balanced multi-class performance.</li>
+        <li><strong>Vectorization:</strong> TF-IDF evaluates opcode structure for implicit flaw detection.</li>
+        <li><strong>Ensemble:</strong> Random Forest scales seamlessly for multi-threaded inference.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB CONTENT: HISTORY -->
+  <!-- ========================================== -->
+  <div class="tab-content" id="tab-history">
+    <h2 class="section-title reveal">Scan History</h2>
+    <div class="history-list reveal" id="historyList">
+      <div style="text-align: center; color: #86868b; padding: 40px;">No scan history found. Run a scan in the Scanner tab.</div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB CONTENT: DOCS -->
+  <!-- ========================================== -->
+  <div class="tab-content" id="tab-docs">
+    <h2 class="section-title reveal">How Sentinel Works</h2>
+    <div class="pipeline-steps">
+      <div class="pipeline-step reveal">
+        <div class="pipeline-step__number">01</div>
+        <div class="pipeline-step__content">
+          <h3>Binary Upload & Security Validation</h3>
+          <p>Upload a compiled executable. The system validates the file signature securely inside an isolated sandbox.</p>
+        </div>
+      </div>
+      <div class="pipeline-step reveal">
+        <div class="pipeline-step__number">02</div>
+        <div class="pipeline-step__content">
+          <h3>Ghidra Extraction</h3>
+          <p>NSA's Ghidra framework performs headless disassembly, traversing functions to extract raw assembly-level opcode DNA.</p>
+        </div>
+      </div>
+      <div class="pipeline-step reveal">
+        <div class="pipeline-step__number">03</div>
+        <div class="pipeline-step__content">
+          <h3>TF-IDF Analytics</h3>
+          <p>Opcode sequences are evaluated using Term Frequency-Inverse Document Frequency to find spatial coding anomalies.</p>
+        </div>
+      </div>
+      <div class="pipeline-step reveal">
+        <div class="pipeline-step__number">04</div>
+        <div class="pipeline-step__content">
+          <h3>AI Classification</h3>
+          <p>A highly-tuned Random Forest ensemble evaluates the vectors against thousands of known CVE patterns.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer reveal">
+    <p>Sentinel AI &mdash; Graduation Project 2026 &bull; Ghidra + FastAPI</p>
+  </footer>
+
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
