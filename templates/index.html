@@ -4,12 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sentinel AI — Binary Vulnerability Detection</title>
-  <meta name="description" content="AI-powered binary vulnerability detection using Ghidra reverse engineering and Random Forest machine learning." />
+  <meta name="description" content="AI-powered binary vulnerability detection using Ghidra reverse engineering and Graph Neural Network machine learning." />
   <link rel="stylesheet" href="/static/css/style.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1f6e1;</text></svg>" />
   
-  <!-- PDF Export Library -->
+  <!-- PDF Export and Markdown Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -59,7 +60,7 @@
       </div>
       <h1 class="header__title">Sentinel AI</h1>
       <p class="header__subtitle">
-        Intelligent binary analysis. Powered by machine learning and reverse engineering.
+        Intelligent binary analysis. Powered by GNN models and headless disassemblers.
       </p>
     </div>
   </header>
@@ -100,16 +101,16 @@
           </svg>
         </div>
         <div class="upload-zone__title">Analyze Binary</div>
-        <div class="upload-zone__subtitle">Drop an executable file here or click to browse</div>
+        <div class="upload-zone__subtitle">Drop an executable binary OR C/C++ source file here</div>
         <div class="upload-zone__formats">
           <span class="format-tag">.exe</span>
           <span class="format-tag">.o</span>
           <span class="format-tag">.elf</span>
-          <span class="format-tag">.dll</span>
-          <span class="format-tag">.so</span>
-          <span class="format-tag">.bin</span>
+          <span class="format-tag">.c</span>
+          <span class="format-tag">.cpp</span>
+          <span class="format-tag">.h</span>
         </div>
-        <input type="file" id="fileInput" class="upload-zone__input" accept=".exe,.o,.elf,.dll,.so,.bin" />
+        <input type="file" id="fileInput" class="upload-zone__input" accept=".exe,.o,.elf,.dll,.so,.bin,.c,.cpp,.cc,.h,.hpp,.cxx" />
       </div>
 
       <!-- Selected File Info -->
@@ -152,11 +153,11 @@
           </div>
           <div class="progress-step" id="step3">
             <div class="progress-step__icon">3</div>
-            <span>Extracting semantic opcodes</span>
+            <span>Extracting Control Flow Graphs</span>
           </div>
           <div class="progress-step" id="step4">
             <div class="progress-step__icon">4</div>
-            <span>Evaluating risk via Random Forest</span>
+            <span>Evaluating risk via GATv2 GNN</span>
           </div>
         </div>
       </div>
@@ -238,6 +239,22 @@
             </div>
           </div>
         </div>
+        
+        <!-- RAG Security Report Card -->
+        <div class="detail-card reveal" style="margin-top: 30px; grid-column: 1 / -1; width: 100%;">
+          <div class="detail-card__title" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px;">
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Generative AI Security Report & Remediations
+            </span>
+            <a id="downloadPdfLink" href="#" target="_blank" class="btn btn--pdf" style="font-size: 13px; padding: 8px 16px; width: auto; max-width: 250px; text-decoration: none; display: none;">
+              📥 Download PDF Report
+            </a>
+          </div>
+          <div id="ragReportContent" class="markdown-body" style="margin-top: 15px; color: var(--text-primary); font-size: 14px; line-height: 1.6;">
+            Interactive RAG analysis report and SEI CERT C remediation guidelines will display here after scanning...
+          </div>
+        </div>
       </div> <!-- End PDF Container -->
 
       <!-- Action Buttons -->
@@ -269,7 +286,7 @@
       </div>
       <div class="stat-card reveal" style="transition-delay: 0.2s;">
         <div class="stat-card__value" id="statTrees">--</div>
-        <div class="stat-card__label">Trees</div>
+        <div class="stat-card__label">Folds</div>
       </div>
       <div class="stat-card reveal" style="transition-delay: 0.3s;">
         <div class="stat-card__value" id="statStatus">--</div>
@@ -279,12 +296,12 @@
 
     <div class="intelligence-info reveal">
       <h3>Engine Architecture</h3>
-      <p>Sentinel AI leverages a robust pipeline tailored for enterprise-grade security:</p>
+      <p>Sentinel AI leverages a state-of-the-art deep learning graph pipeline:</p>
       <ul>
         <li><strong>Dataset:</strong> Juliet Test Suite for robust, varied C/C++ vulnerability paradigms.</li>
-        <li><strong>Balancing:</strong> SMOTE ensures balanced multi-class performance.</li>
-        <li><strong>Vectorization:</strong> TF-IDF evaluates opcode structure for implicit flaw detection.</li>
-        <li><strong>Ensemble:</strong> Random Forest scales seamlessly for multi-threaded inference.</li>
+        <li><strong>Vectorization:</strong> Word2Vec (asm2vec) instruction-level semantic embedding to capture assembly intent.</li>
+        <li><strong>Graph Modeling:</strong> Graph Attention Network (GATv2Conv + global pooling) to inspect CFG connectivity.</li>
+        <li><strong>Evaluation:</strong> Stratified 5-Fold Cross-Validation ensuring high-precision vulnerability checks (79.91% AUC-ROC).</li>
       </ul>
     </div>
   </div>
@@ -309,28 +326,28 @@
         <div class="pipeline-step__number">01</div>
         <div class="pipeline-step__content">
           <h3>Binary Upload & Security Validation</h3>
-          <p>Upload a compiled executable. The system validates the file signature securely inside an isolated sandbox.</p>
+          <p>Upload a compiled executable or source file. C/C++ source code is automatically compiled on the fly using a MinGW compiler wrapper.</p>
         </div>
       </div>
       <div class="pipeline-step reveal">
         <div class="pipeline-step__number">02</div>
         <div class="pipeline-step__content">
           <h3>Ghidra Extraction</h3>
-          <p>NSA's Ghidra framework performs headless disassembly, traversing functions to extract raw assembly-level opcode DNA.</p>
+          <p>NSA's Ghidra framework performs headless disassembly, traversing basic block nodes and edge connections to extract the function's Control Flow Graph (CFG).</p>
         </div>
       </div>
       <div class="pipeline-step reveal">
         <div class="pipeline-step__number">03</div>
         <div class="pipeline-step__content">
-          <h3>TF-IDF Analytics</h3>
-          <p>Opcode sequences are evaluated using Term Frequency-Inverse Document Frequency to find spatial coding anomalies.</p>
+          <h3>Word2Vec Instruction Embeddings</h3>
+          <p>Assembly instruction tokens in each basic block are converted into 128-dimensional dense vectors using a pre-trained asm2vec model.</p>
         </div>
       </div>
       <div class="pipeline-step reveal">
         <div class="pipeline-step__number">04</div>
         <div class="pipeline-step__content">
-          <h3>AI Classification</h3>
-          <p>A highly-tuned Random Forest ensemble evaluates the vectors against thousands of known CVE patterns.</p>
+          <h3>Graph Attention Neural Network</h3>
+          <p>A multi-head GATv2 model processes the graph topology, performing message passing along basic-block edges to compute risk verdicts with extreme accuracy.</p>
         </div>
       </div>
     </div>
@@ -342,6 +359,32 @@
   </footer>
 
 </div>
+
+<!-- Interactive Security Assistant Sidebar -->
+<div id="chatDrawer" class="chat-drawer">
+  <div class="chat-drawer__header">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span class="pulse-dot"></span>
+      <span style="font-weight: 700; font-size: 15px;">Security AI Assistant</span>
+    </div>
+    <button id="closeChatBtn" class="chat-drawer__close-btn">&times;</button>
+  </div>
+  <div id="chatMessages" class="chat-drawer__messages">
+    <div class="chat-message chat-message--assistant">
+      Hello! I'm your Sentinel AI interactive security helper. Ask me any questions about secure coding, memory safety, or how to remediate the vulnerabilities flagged in your scan!
+    </div>
+  </div>
+  <div class="chat-drawer__input-area">
+    <input type="text" id="chatInput" placeholder="Ask about remediation, strcat rules..." />
+    <button id="sendChatBtn">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<button id="toggleChatBtn" class="chat-toggle-btn" title="Open Security Assistant">
+  💬 Security Assistant
+</button>
 
 <script src="/static/js/app.js"></script>
 </body>

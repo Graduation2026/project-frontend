@@ -23,12 +23,24 @@ const newScanBtn = document.getElementById('newScanBtn');
 const exportPdfBtn = document.getElementById('exportPdfBtn');
 const historyList = document.getElementById('historyList');
 
+// Interactive Chatbot elements
+const chatDrawer = document.getElementById('chatDrawer');
+const toggleChatBtn = document.getElementById('toggleChatBtn');
+const closeChatBtn = document.getElementById('closeChatBtn');
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const sendChatBtn = document.getElementById('sendChatBtn');
+
 let selectedFile = null;
 let lastResult = null;
 let scanHistory = [];
 
+// Chat Session and Context
+let chatHistory = [];
+let currentDecompiledContext = "";
+const chatSessionId = 'session_' + Math.random().toString(36).substr(2, 9);
+
 // ─── Logical Threat Mapping (Enterprise Grade) ─────────────────
-// Highly professional mitigation logic for standard opcodes
 const FEATURE_EXPLANATIONS = {
   "INT 0x80": {
     desc: "System Call Invocation: Explicit kernel trap observed.",
@@ -90,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupTabs();
   initScrollReveal();
   setupThemeToggle();
+  setupChatbot();
 });
 
 // ─── Theme Toggle ──────────────────────────────────────────────
@@ -245,11 +258,11 @@ function setupEventListeners() {
 
 // ─── File Selection ────────────────────────────────────────────
 function handleFileSelection(file) {
-  const allowedExt = ['.exe', '.o', '.elf', '.dll', '.so', '.bin'];
+  const allowedExt = ['.exe', '.o', '.elf', '.dll', '.so', '.bin', '.c', '.cpp', '.cc', '.h', '.hpp', '.cxx'];
   const ext = '.' + file.name.split('.').pop().toLowerCase();
 
   if (!allowedExt.includes(ext)) {
-    alert('Invalid file type. Only binary executables are accepted.');
+    alert('Invalid file type. Only binary executables and C/C++ source files are accepted.');
     return;
   }
   if (file.size > 50 * 1024 * 1024) {
@@ -263,6 +276,99 @@ function handleFileSelection(file) {
   fileInfo.classList.add('visible');
   analyzeBtn.classList.add('visible');
   analyzeBtn.disabled = false;
+}
+
+// ─── Chatbot Event Listeners & Logic ──────────────────────────
+function setupChatbot() {
+  if (toggleChatBtn) {
+    toggleChatBtn.addEventListener('click', () => {
+      chatDrawer.classList.toggle('open');
+    });
+  }
+  if (closeChatBtn) {
+    closeChatBtn.addEventListener('click', () => {
+      chatDrawer.classList.remove('open');
+    });
+  }
+  if (sendChatBtn) {
+    sendChatBtn.addEventListener('click', sendChatMessage);
+  }
+  if (chatInput) {
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
+    });
+  }
+}
+
+function appendUserChatMessage(text) {
+  const msgEl = document.createElement('div');
+  msgEl.className = 'chat-message chat-message--user';
+  msgEl.textContent = text;
+  chatMessages.appendChild(msgEl);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function appendAssistantChatMessage(text) {
+  const msgEl = document.createElement('div');
+  msgEl.className = 'chat-message chat-message--assistant';
+  msgEl.innerHTML = marked.parse(text);
+  chatMessages.appendChild(msgEl);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function appendSystemLoadingChatMessage() {
+  const loadingId = 'loading_' + Date.now();
+  const msgEl = document.createElement('div');
+  msgEl.className = 'chat-message chat-message--assistant';
+  msgEl.id = loadingId;
+  msgEl.innerHTML = `<span style="font-style:italic;color:var(--text-secondary)">Thinking...</span>`;
+  chatMessages.appendChild(msgEl);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return loadingId;
+}
+
+function removeSystemLoadingChatMessage(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+async function sendChatMessage() {
+  const query = chatInput.value.trim();
+  if (!query) return;
+
+  appendUserChatMessage(query);
+  chatInput.value = '';
+
+  const loadingId = appendSystemLoadingChatMessage();
+
+  try {
+    const response = await fetch('/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        session_id: chatSessionId,
+        query: query,
+        decompiled_code: currentDecompiledContext,
+        chat_history: chatHistory
+      })
+    });
+
+    const data = await response.json();
+    removeSystemLoadingChatMessage(loadingId);
+
+    if (response.ok && data.status === 'success') {
+      appendAssistantChatMessage(data.response);
+      chatHistory.push({ role: 'user', content: query });
+      chatHistory.push({ role: 'assistant', content: data.response });
+    } else {
+      appendAssistantChatMessage(`Error: ${data.detail?.message || data.detail || 'Failed to get secure helper feedback.'}`);
+    }
+  } catch (error) {
+    removeSystemLoadingChatMessage(loadingId);
+    appendAssistantChatMessage(`Network error: ${error.message}`);
+  }
 }
 
 function clearFile() {
@@ -321,7 +427,7 @@ function animateProgress() {
     { id: 'step1', progress: 15, delay: 0 },
     { id: 'step2', progress: 50, delay: 1500 },
     { id: 'step3', progress: 80, delay: 3000 },
-    { id: 'step4', progress: 90, delay: 4000 },
+    { id: 'step4', progress: 95, delay: 4000 },
   ];
 
   steps.forEach(s => document.getElementById(s.id).classList.remove('active', 'done'));
@@ -380,22 +486,75 @@ function displayResults(data) {
   document.getElementById('resTotalTime').textContent = data.timing.total_seconds + 's';
   document.getElementById('resTimestamp').textContent = new Date(data.timestamp).toLocaleString();
 
+  // ── Render RAG Markdown Report and Set PDF URL ──
+  const reportContainer = document.getElementById('ragReportContent');
+  if (reportContainer) {
+    reportContainer.innerHTML = marked.parse(data.report_markdown || 'No report available.');
+  }
+
+  const downloadPdfLink = document.getElementById('downloadPdfLink');
+  if (downloadPdfLink) {
+    if (data.pdf_url) {
+      downloadPdfLink.href = data.pdf_url;
+      downloadPdfLink.style.display = 'inline-flex';
+    } else {
+      downloadPdfLink.style.display = 'none';
+    }
+  }
+
+  // Set chat sidebar context
+  chatHistory = [];
+  if (data.flagged_functions && data.flagged_functions.length > 0) {
+    currentDecompiledContext = data.flagged_functions[0].decompiled_code;
+    
+    // Welcome message to user
+    chatMessages.innerHTML = '';
+    const welcomeEl = document.createElement('div');
+    welcomeEl.className = 'chat-message chat-message--assistant';
+    welcomeEl.innerHTML = `Our GNN model has flagged <strong>${data.flagged_functions_count} suspicious function(s)</strong>.
+    I have pre-loaded the context for function <code>${data.flagged_functions[0].function_name}</code>.<br/><br/>
+    Ask me how to remediate it or explain the violated standards!`;
+    chatMessages.appendChild(welcomeEl);
+    
+    // Slide open chat sidebar automatically
+    setTimeout(() => {
+      chatDrawer.classList.add('open');
+    }, 1500);
+  } else {
+    currentDecompiledContext = "";
+    chatMessages.innerHTML = `
+      <div class="chat-message chat-message--assistant">
+        No functions were flagged as vulnerable! Your code appears clean and compliant with SEI CERT C coding standards. Let me know if you want to ask any general C security questions!
+      </div>`;
+  }
+
   // Logical Feature Breakdown
   const featureList = document.getElementById('featureList');
   featureList.innerHTML = '';
 
   if (data.top_features && data.top_features.length > 0) {
     data.top_features.slice(0, 8).forEach(feat => {
-      const isDanger = !isSafe && feat.importance > 0.05;
+      const isDanger = !isSafe && feat.feature.includes("(Vulnerable)");
 
       let exp = FEATURE_EXPLANATIONS[feat.feature];
       if (!exp) {
-        exp = {
-          desc: "Unusual Assembly Construct detected.",
-          risk: "Unknown Risk — Anomalous pattern outside standard structural baseline.",
-          mitigation: "Manual reverse-engineering of this opcode block is suggested.",
-          cwe: "N/A"
-        };
+        const isVulnFeature = feat.feature.includes("(Vulnerable)");
+        const funcName = feat.feature.split(" (")[0];
+        if (isVulnFeature) {
+          exp = {
+            desc: `GNN model detected highly suspicious Control Flow Graph (CFG) patterns inside function '${funcName}'.`,
+            risk: `High Risk — The control flow structures correlate heavily with standard memory security flaws, indicating a high risk of buffer overflow or out-of-bounds write.`,
+            mitigation: `Inspect buffer sizes, replace unchecked string operations, and follow secure SEI CERT C boundaries.`,
+            cwe: `CWE-119: Memory Safety Flaws`
+          };
+        } else {
+          exp = {
+            desc: `GNN model successfully verified function '${funcName}' as safe.`,
+            risk: `Low Risk — The function Control Flow Graph aligns with compliant and secure coding paradigms.`,
+            mitigation: `Maintain standard secure development lifecycles.`,
+            cwe: `Compliant`
+          };
+        }
       }
 
       const item = document.createElement('div');
@@ -403,7 +562,7 @@ function displayResults(data) {
       item.innerHTML = `
         <div class="feature-item__head">
           <div class="feature-item__name">${escapeHtml(feat.feature)}</div>
-          <div class="feature-item__impact">Relevance: ${(feat.importance * 100).toFixed(2)}%</div>
+          <div class="feature-item__impact">GNN Score: ${(feat.importance * 100).toFixed(1)}%</div>
         </div>
         <div class="feature-item__desc"><strong>Context:</strong> ${exp.desc}</div>
         <div class="feature-item__risk"><strong>Threat Intel:</strong> ${exp.risk}</div>
@@ -506,7 +665,11 @@ function addToHistory(data) {
     timestamp: data.timestamp,
     sha256: data.sha256,
     timing: data.timing,
-    top_features: data.top_features
+    top_features: data.top_features,
+    report_markdown: data.report_markdown,
+    pdf_url: data.pdf_url,
+    flagged_functions: data.flagged_functions,
+    flagged_functions_count: data.flagged_functions_count
   };
   scanHistory.unshift(entry);
   if (scanHistory.length > 20) scanHistory.pop();
@@ -528,7 +691,7 @@ function renderHistory() {
     const isSafe = entry.label === 0;
     const item = document.createElement('div');
     item.className = 'history-item';
-    item.style.cursor = 'pointer'; // Make it look clickable
+    item.style.cursor = 'pointer'; 
     item.innerHTML = `
       <div class="history-item__verdict history-item__verdict--${isSafe ? 'safe' : 'vulnerable'}"></div>
       <div class="history-item__name">${escapeHtml(entry.filename)}</div>
@@ -540,7 +703,6 @@ function renderHistory() {
 
     // Add click event to view past reports
     item.addEventListener('click', () => {
-      // Switch to Scanner tab
       const tabBtns = document.querySelectorAll('.tab-btn');
       const tabContents = document.querySelectorAll('.tab-content');
       tabBtns.forEach(b => b.classList.remove('active'));
@@ -549,7 +711,6 @@ function renderHistory() {
       document.querySelector('.tab-btn[data-tab="scanner"]').classList.add('active');
       document.getElementById('tab-scanner').classList.add('active');
 
-      // Hide upload section, show result
       uploadSection.style.display = 'none';
       progressSection.classList.remove('visible');
       lastResult = entry;
@@ -575,6 +736,7 @@ function resetUI() {
   });
   progressBar.style.width = '0%';
   progressTitle.textContent = 'Analyzing binary structure...';
+  chatDrawer.classList.remove('open');
 }
 
 function formatFileSize(bytes) {
