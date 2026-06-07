@@ -305,6 +305,82 @@ function setupChatbot() {
       if (e.key === 'Enter') sendChatMessage();
     });
   }
+  setupChatResize();
+  setupChatSuggestions();
+}
+
+function setupChatResize() {
+  const handle = document.getElementById('chatResizeHandle');
+  const drawer = document.getElementById('chatDrawer');
+  if (!handle || !drawer) return;
+  
+  let isResizing = false;
+  let startWidth = 0;
+  let startX = 0;
+  
+  const startResize = (clientX) => {
+    isResizing = true;
+    startX = clientX;
+    startWidth = parseInt(window.getComputedStyle(drawer).width, 10);
+    handle.classList.add('active');
+    document.body.style.cursor = 'ew-resize';
+    document.body.style.userSelect = 'none';
+  };
+  
+  const resize = (clientX) => {
+    if (!isResizing) return;
+    const dx = startX - clientX;
+    const newWidth = Math.max(300, Math.min(window.innerWidth - 100, startWidth + dx));
+    drawer.style.width = newWidth + 'px';
+  };
+  
+  const stopResize = () => {
+    if (!isResizing) return;
+    isResizing = false;
+    handle.classList.remove('active');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
+  
+  // Mouse events
+  handle.addEventListener('mousedown', (e) => {
+    startResize(e.clientX);
+    e.preventDefault();
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    resize(e.clientX);
+  });
+  
+  document.addEventListener('mouseup', stopResize);
+  
+  // Touch events for touch-enabled devices
+  handle.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 0) {
+      startResize(e.touches[0].clientX);
+    }
+  }, { passive: true });
+  
+  document.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 0) {
+      resize(e.touches[0].clientX);
+    }
+  }, { passive: true });
+  
+  document.addEventListener('touchend', stopResize);
+}
+
+function setupChatSuggestions() {
+  const suggestions = document.querySelectorAll('.suggestion-btn');
+  suggestions.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const query = btn.getAttribute('data-query');
+      if (query && chatInput) {
+        chatInput.value = query;
+        sendChatMessage();
+      }
+    });
+  });
 }
 
 function appendUserChatMessage(text) {
@@ -753,4 +829,27 @@ function formatFileSize(bytes) {
 }
 function escapeHtml(str) {
   const div = document.createElement('div'); div.appendChild(document.createTextNode(str)); return div.innerHTML;
+}
+
+// ─── C Vulnerability Templates Loader ──────────────────────────
+const CWE_TEMPLATES = {
+  strcpy: {
+    name: 'strcpy_overflow.c',
+    code: `#include <stdio.h>\n#include <string.h>\n\nvoid vulnerable_copy(char *user_input) {\n    char dest_buffer[16];\n    // DANGER: No size checking. Stack overflow potential!\n    strcpy(dest_buffer, user_input);\n    printf("Buffer: %s\\n", dest_buffer);\n}\n\nint main(int argc, char *argv[]) {\n    if (argc > 1) {\n        vulnerable_copy(argv[1]);\n    }\n    return 0;\n}`
+  },
+  gets: {
+    name: 'gets_overflow.c',
+    code: `#include <stdio.h>\n\nvoid vulnerable_input() {\n    char name_buffer[32];\n    printf("Enter name: ");\n    // DANGER: gets() copies unlimited characters until newline!\n    gets(name_buffer);\n    printf("Hello, %s\\n", name_buffer);\n}\n\nint main() {\n    vulnerable_input();\n    return 0;\n}`
+  },
+  command: {
+    name: 'command_injection.c',
+    code: `#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\nvoid run_ping(char *ip_address) {\n    char command[128];\n    // DANGER: Directly concatenating input into command shell!\n    sprintf(command, "ping -c 1 %s", ip_address);\n    system(command);\n}\n\nint main(int argc, char *argv[]) {\n    if (argc > 1) {\n        run_ping(argv[1]);\n    }\n    return 0;\n}`
+  }
+};
+
+function loadCweTemplate(type) {
+  const template = CWE_TEMPLATES[type];
+  if (!template) return;
+  const file = new File([template.code], template.name, { type: 'text/plain' });
+  handleFileSelection(file);
 }

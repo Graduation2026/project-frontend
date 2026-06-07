@@ -30,7 +30,7 @@
     }
 
     .welcome-container {
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
       padding: 60px 20px;
       position: relative;
@@ -302,6 +302,89 @@
       .stats-panel { grid-template-columns: repeat(2, 1fr); }
       .hero__title { font-size: 40px; }
     }
+
+    /* Terminal Simulator Styling */
+    .terminal-container {
+      background: #0d0d0f;
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: left;
+      font-family: var(--font-mono);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .terminal-header {
+      background: #18181b;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      position: relative;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .terminal-dots {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot--red { background: #ff5f56; }
+    .dot--yellow { background: #ffbd2e; }
+    .dot--green { background: #27c93f; }
+    
+    .terminal-title {
+      color: #a1a1a6;
+      font-size: 13px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-weight: 500;
+    }
+    
+    .terminal-body {
+      padding: 24px;
+      height: 280px;
+      overflow-y: auto;
+      color: #30d158;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    
+    .term-line {
+      margin-bottom: 8px;
+      white-space: pre-wrap;
+    }
+    
+    .term-prompt {
+      color: #2997ff;
+      font-weight: 700;
+    }
+    
+    .term-input {
+      color: #f5f5f7;
+    }
+    
+    .term-line--output {
+      color: #e4e4e7;
+    }
+    
+    .terminal-action-bar {
+      padding: 16px;
+      background: #18181b;
+      display: flex;
+      justify-content: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
   </style>
 </head>
 <body>
@@ -361,6 +444,29 @@
       <a href="#pipeline" class="btn--secondary">Explore Architecture</a>
     </div>
   </header>
+
+  <!-- TERMINAL SIMULATOR SECTION -->
+  <section class="terminal-simulator reveal" style="margin-bottom: 70px;">
+    <div class="terminal-container">
+      <div class="terminal-header">
+        <div class="terminal-dots">
+          <span class="dot dot--red"></span>
+          <span class="dot dot--yellow"></span>
+          <span class="dot dot--green"></span>
+        </div>
+        <div class="terminal-title">headless-analyzer@sentinel-ai: ~</div>
+      </div>
+      <div class="terminal-body" id="termLogs">
+        <div class="term-line"><span class="term-prompt">[guest@sentinel-ai]$</span> <span class="term-input">./sentinel-scan --demo --file binary_audit.elf</span></div>
+        <div class="term-line term-line--output" style="color: var(--text-muted); font-style: italic;">Press "Run Live Demo Scanner" below to watch a simulated reverse engineering and machine learning analysis sequence.</div>
+      </div>
+      <div class="terminal-action-bar">
+        <button class="btn--primary" id="runTermSimBtn" style="font-size: 14px; padding: 12px 30px; margin: 0 auto; width: auto;" onclick="runTerminalSimulation()">
+          ⚡ Run Live Demo Scanner
+        </button>
+      </div>
+    </div>
+  </section>
 
   <!-- LIVE SYSTEM STATS -->
   <section class="stats-panel">
@@ -521,6 +627,61 @@
         localStorage.setItem('sentinelTheme', 'dark');
       }
     });
+  }
+
+  function runTerminalSimulation() {
+    const btn = document.getElementById('runTermSimBtn');
+    const logsContainer = document.getElementById('termLogs');
+    if (!btn || !logsContainer) return;
+    
+    btn.disabled = true;
+    btn.textContent = "⏳ Scanner Running...";
+    
+    // Reset terminal
+    logsContainer.innerHTML = `
+      <div class="term-line"><span class="term-prompt">[guest@sentinel-ai]$</span> <span class="term-input">./sentinel-scan --demo --file binary_audit.elf</span></div>
+    `;
+    
+    const logs = [
+      { text: "[+] Initializing Headless reverse engineering sandbox...", delay: 400 },
+      { text: "[+] Invoking NSA Ghidra decompiler daemon...", delay: 600 },
+      { text: "[+] Successfully loaded ELF binary [hash: 7a8b9c...]", delay: 400 },
+      { text: "[+] Analysis: Traversing basic block branch instructions...", delay: 600 },
+      { text: "[+] Extracted Control Flow Graph: 12 nodes, 16 connections.", delay: 500 },
+      { text: "[+] Mapping assembly structures via asm2vec embedding matrix...", delay: 700 },
+      { text: "[+] Input fed into Graph Attention Neural Network (GATv2)...", delay: 700 },
+      { text: "[!] WARNING: Model flagged function 'process_packets' as VULNERABLE!", color: "#ff453a", delay: 800 },
+      { text: "    - Threat Confidence Score: 94.8% (CWE-121)", color: "#ff453a", delay: 300 },
+      { text: "[+] Querying Sentinel RAG database for safety mitigations...", delay: 600 },
+      { text: "[+] Found match: SEI CERT C safety standard STR31-C.", delay: 400 },
+      { text: "[+] Compiling automated remediation patch instructions...", delay: 600 },
+      { text: "[+] SUCCESS: PDF Security audit report written to disk.", color: "#30d158", delay: 500 },
+      { text: "[+] Scan sequence complete. Threat mitigated.", color: "#30d158", delay: 400 }
+    ];
+    
+    let currentIdx = 0;
+    
+    function printNextLog() {
+      if (currentIdx < logs.length) {
+        const item = logs[currentIdx];
+        const line = document.createElement('div');
+        line.className = 'term-line term-line--output';
+        if (item.color) {
+          line.style.color = item.color;
+        }
+        line.textContent = item.text;
+        logsContainer.appendChild(line);
+        logsContainer.scrollTop = logsContainer.scrollHeight;
+        
+        currentIdx++;
+        setTimeout(printNextLog, item.delay);
+      } else {
+        btn.disabled = false;
+        btn.textContent = "⚡ Run Live Demo Scanner";
+      }
+    }
+    
+    setTimeout(printNextLog, 300);
   }
 
   document.addEventListener('DOMContentLoaded', () => {

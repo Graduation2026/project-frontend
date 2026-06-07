@@ -283,6 +283,67 @@
       .anatomy-container { grid-template-columns: 1fr; }
       .guide-title { font-size: 36px; }
     }
+
+    /* Hardening Section Grid */
+    .hardening-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 30px;
+    }
+    .hardening-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 30px;
+      backdrop-filter: blur(20px);
+      transition: all 0.3s ease;
+      text-align: left;
+    }
+    .hardening-card:hover {
+      border-color: var(--accent-secondary);
+      transform: translateY(-2px);
+    }
+    .hardening-card__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border-glass);
+      padding-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .flag-badge {
+      background: var(--bg-secondary);
+      color: var(--accent-primary);
+      border: 1px solid var(--border-glass);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    .protection-type {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .hardening-card__body {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    .hardening-card__body strong {
+      color: var(--text-primary);
+    }
+    
+    @media (max-width: 768px) {
+      .hardening-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -461,6 +522,60 @@
 
       </div>
 
+    </div>
+  </section>
+
+  <!-- COMPILER HARDENING FLAGS CHEATSHEET -->
+  <section class="hardening-section reveal" style="margin-bottom: 80px;">
+    <h2 class="section-headline">⚡ GCC/Clang Compiler Hardening Reference</h2>
+    <p style="text-align: center; color: var(--text-secondary); max-width: 700px; margin: 0 auto 40px; font-size: 15px;">
+      Prevent exploitation of remaining buffer weaknesses by instructing the compiler to generate secure binary structures. Always include these flags during release compilation:
+    </p>
+    
+    <div class="hardening-grid">
+      <div class="hardening-card">
+        <div class="hardening-card__header">
+          <span class="flag-badge font-mono">-fstack-protector-strong</span>
+          <span class="protection-type">Stack Guard</span>
+        </div>
+        <div class="hardening-card__body">
+          <strong>Defends Against:</strong> Stack Smashing / Stack Buffer Overflow (CWE-121).<br/>
+          <strong>How it works:</strong> Places a secret random integer ("canary") on the stack frame right before the return pointer. If a buffer overflows, the canary is corrupted first. The runtime detects this and terminates execution before payload hijack occurs.
+        </div>
+      </div>
+
+      <div class="hardening-card">
+        <div class="hardening-card__header">
+          <span class="flag-badge font-mono">-D_FORTIFY_SOURCE=2</span>
+          <span class="protection-type">Safe Library Functions</span>
+        </div>
+        <div class="hardening-card__body">
+          <strong>Defends Against:</strong> Unchecked String Copies & Format Strings (CWE-120, CWE-134).<br/>
+          <strong>How it works:</strong> Replaces calls to vulnerable functions (like <code>strcpy</code>, <code>memcpy</code>) with compile-time and run-time size-checked equivalents (e.g. <code>__strcpy_chk</code>) if buffer sizes are statically known.
+        </div>
+      </div>
+
+      <div class="hardening-card">
+        <div class="hardening-card__header">
+          <span class="flag-badge font-mono">-fPIE -pie</span>
+          <span class="protection-type">ASLR Compatibility</span>
+        </div>
+        <div class="hardening-card__body">
+          <strong>Defends Against:</strong> Return-Oriented Programming (ROP) Gadget Chains.<br/>
+          <strong>How it works:</strong> Compiles the executable as position-independent, allowing the OS kernel to randomize the code section load address (Address Space Layout Randomization). Attackers cannot guess gadget memory locations.
+        </div>
+      </div>
+
+      <div class="hardening-card">
+        <div class="hardening-card__header">
+          <span class="flag-badge font-mono">-Wl,-z,relro,-z,now</span>
+          <span class="protection-type">Full RELRO</span>
+        </div>
+        <div class="hardening-card__body">
+          <strong>Defends Against:</strong> Global Offset Table (GOT) Overwrites.<br/>
+          <strong>How it works:</strong> Marks the Global Offset Table as read-only after resolving external function pointers at load time. Attackers cannot overwrite library calls (like redirecting <code>printf</code> to <code>system</code>).
+        </div>
+      </div>
     </div>
   </section>
 

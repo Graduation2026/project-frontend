@@ -130,6 +130,50 @@
       <button class="analyze-btn" id="analyzeBtn" disabled>
         <span>Start Analysis</span>
       </button>
+
+      <!-- Quick Start Templates -->
+      <div class="quick-start-container">
+        <h3 class="quick-start-title">⚡ Try Quick-Start C Templates</h3>
+        <p class="quick-start-subtitle">Click a standard C vulnerability template below to load it into the analyzer instantly.</p>
+        
+        <div class="quick-start-grid">
+          
+          <div class="quick-start-card" onclick="loadCweTemplate('strcpy')">
+            <div class="quick-start-card__header">
+              <span class="cwe-badge">CWE-120</span>
+              <span class="vuln-badge font-mono">strcpy() overflow</span>
+            </div>
+            <pre class="quick-start-card__code">void vuln(char *input) {
+    char buf[16];
+    strcpy(buf, input);
+}</pre>
+          </div>
+
+          <div class="quick-start-card" onclick="loadCweTemplate('gets')">
+            <div class="quick-start-card__header">
+              <span class="cwe-badge">CWE-121</span>
+              <span class="vuln-badge font-mono">gets() stack overflow</span>
+            </div>
+            <pre class="quick-start-card__code">void vuln() {
+    char buf[32];
+    gets(buf);
+}</pre>
+          </div>
+
+          <div class="quick-start-card" onclick="loadCweTemplate('command')">
+            <div class="quick-start-card__header">
+              <span class="cwe-badge">CWE-78</span>
+              <span class="vuln-badge font-mono">system() injection</span>
+            </div>
+            <pre class="quick-start-card__code">void ping(char *ip) {
+    char cmd[128];
+    sprintf(cmd, "ping %s", ip);
+    system(cmd);
+}</pre>
+          </div>
+
+        </div>
+      </div>
     </section>
 
     <!-- PROGRESS SECTION -->
@@ -362,6 +406,7 @@
 
 <!-- Interactive Security Assistant Sidebar -->
 <div id="chatDrawer" class="chat-drawer">
+  <div id="chatResizeHandle" class="chat-drawer__resize-handle"></div>
   <div class="chat-drawer__header">
     <div style="display: flex; align-items: center; gap: 10px;">
       <span class="pulse-dot"></span>
@@ -373,6 +418,12 @@
     <div class="chat-message chat-message--assistant">
       Hello! I'm your Sentinel AI interactive security helper. Ask me any questions about secure coding, memory safety, or how to remediate the vulnerabilities flagged in your scan!
     </div>
+  </div>
+  <div class="chat-drawer__suggestions" id="chatSuggestions">
+    <button class="suggestion-btn" data-query="How do I compile this to enable Stack Canaries?">🛠️ Stack Canaries</button>
+    <button class="suggestion-btn" data-query="Show me how to replace strcpy with a safe alternative.">🛡️ Safe strcpy Fix</button>
+    <button class="suggestion-btn" data-query="What does ASLR do to prevent ROP chains?">🔒 ASLR & ROP</button>
+    <button class="suggestion-btn" data-query="How do I fix a Use-After-Free (UAF) bug?">🐛 Fix UAF</button>
   </div>
   <div class="chat-drawer__input-area">
     <input type="text" id="chatInput" placeholder="Ask about remediation, strcat rules..." />
