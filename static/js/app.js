@@ -261,6 +261,11 @@ function setupEventListeners() {
   analyzeBtn.addEventListener('click', startAnalysis);
   newScanBtn.addEventListener('click', resetUI);
   if (exportPdfBtn) exportPdfBtn.addEventListener('click', exportToPdf);
+  
+  const clearBtn = document.getElementById('clearHistoryBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', clearAllHistory);
+  }
 }
 
 // ─── File Selection ────────────────────────────────────────────
@@ -768,7 +773,14 @@ function loadHistory() {
 }
 
 function renderHistory() {
-  if (scanHistory.length === 0) return;
+  const clearBtn = document.getElementById('clearHistoryBtn');
+  if (scanHistory.length === 0) {
+    historyList.innerHTML = '<div style="text-align: center; color: #86868b; padding: 40px;">No scan history found. Run a scan in the Scanner tab.</div>';
+    if (clearBtn) clearBtn.style.display = 'none';
+    return;
+  }
+  if (clearBtn) clearBtn.style.display = 'block';
+  
   historyList.innerHTML = '';
   scanHistory.forEach(entry => {
     const isSafe = entry.label === 0;
@@ -782,6 +794,7 @@ function renderHistory() {
         ${(entry.confidence * 100).toFixed(1)}%
       </div>
       <div class="history-item__time">${new Date(entry.timestamp).toLocaleTimeString()}</div>
+      <button class="history-item__delete" title="Delete scan">&times;</button>
     `;
 
     // Add click event to view past reports
@@ -800,8 +813,32 @@ function renderHistory() {
       displayResults(entry);
     });
 
+    const deleteBtn = item.querySelector('.history-item__delete');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`Are you sure you want to delete the scan for ${entry.filename}?`)) {
+          deleteHistoryItem(entry.timestamp);
+        }
+      });
+    }
+
     historyList.appendChild(item);
   });
+}
+
+function deleteHistoryItem(timestamp) {
+  scanHistory = scanHistory.filter(entry => entry.timestamp !== timestamp);
+  try { localStorage.setItem('sentinelHistory', JSON.stringify(scanHistory)); } catch (e) { }
+  renderHistory();
+}
+
+function clearAllHistory() {
+  if (confirm("Are you sure you want to delete all scan history? This action cannot be undone.")) {
+    scanHistory = [];
+    try { localStorage.setItem('sentinelHistory', JSON.stringify(scanHistory)); } catch (e) { }
+    renderHistory();
+  }
 }
 
 // ─── Reset UI ──────────────────────────────────────────────────

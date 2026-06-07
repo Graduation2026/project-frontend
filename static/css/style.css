@@ -190,6 +190,8 @@ body::before {
 .btn--primary:hover { opacity: 0.9; transform: scale(1.02); }
 .btn--pdf { background: var(--bg-secondary); color: var(--text-primary); }
 .btn--pdf:hover { background: var(--border-glass); transform: scale(1.02); }
+.btn--danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+.btn--danger:hover { background: #ef4444; color: white; border-color: #ef4444; transform: scale(1.02); }
 
 /* ── Progress Section ──────────────────────────────────────── */
 .progress-section { display: none; margin-bottom: 60px; }
@@ -271,14 +273,25 @@ body::before {
 
 /* ── History Section ───────────────────────────────────────── */
 .history-list { display: flex; flex-direction: column; gap: 16px; }
-.history-item { display: flex; align-items: center; gap: 20px; padding: 20px 24px; background: var(--bg-primary); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); transition: var(--transition-base); }
+.history-item { position: relative; display: flex; align-items: center; gap: 20px; padding: 20px 24px; background: var(--bg-primary); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); transition: var(--transition-base); }
 .history-item:hover { transform: scale(1.01); box-shadow: 0 10px 30px var(--shadow-glow); }
 .history-item__verdict { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
 .history-item__verdict--safe { background: var(--safe-color); }
 .history-item__verdict--vulnerable { background: var(--danger-color); }
-.history-item__name { flex: 1; font-weight: 600; font-size: 15px; }
+.history-item__name { flex: 1; font-weight: 600; font-size: 15px; padding-right: 35px; }
 .history-item__confidence { font-family: var(--font-mono); font-size: 14px; font-weight: 600; }
-.history-item__time { font-size: 13px; color: var(--text-secondary); }
+.history-item__time { font-size: 13px; color: var(--text-secondary); margin-right: 25px; }
+.history-item__delete {
+  position: absolute; right: 24px;
+  background: transparent; border: none; color: var(--text-secondary);
+  font-size: 20px; font-weight: 600; cursor: pointer; display: none;
+  align-items: center; justify-content: center; width: 24px; height: 24px;
+  border-radius: 50%; transition: all 0.2s ease; line-height: 1;
+}
+.history-item:hover .history-item__delete { display: flex; }
+.history-item__delete:hover {
+  background: rgba(239, 68, 68, 0.1); color: #ef4444;
+}
 
 /* ── Docs Section ───────────────────────────────────────────── */
 .section-title { font-size: 36px; font-weight: 700; text-align: center; margin-bottom: 60px; letter-spacing: -1px; color: var(--text-primary); }

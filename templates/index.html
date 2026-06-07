@@ -210,6 +210,16 @@
     <!-- RESULTS SECTION -->
     <section class="results-section" id="resultsSection">
       
+      <!-- Action Buttons -->
+      <div class="action-buttons reveal" style="margin-top: 0; margin-bottom: 30px;">
+        <button class="btn btn--primary" id="newScanBtn">
+          New Analysis
+        </button>
+        <button class="btn btn--pdf" id="exportPdfBtn" style="display:none">
+          Export Professional Report (PDF)
+        </button>
+      </div>
+
       <!-- Container for PDF Export -->
       <div id="pdfExportContainer" style="padding: 40px 20px; background: #ffffff;">
         <div class="report-header" style="display:none; text-align:center; margin-bottom: 40px;">
@@ -301,15 +311,6 @@
         </div>
       </div> <!-- End PDF Container -->
 
-      <!-- Action Buttons -->
-      <div class="action-buttons reveal" style="transition-delay: 0.3s;">
-        <button class="btn btn--primary" id="newScanBtn">
-          New Analysis
-        </button>
-        <button class="btn btn--pdf" id="exportPdfBtn" style="display:none">
-          Export Professional Report (PDF)
-        </button>
-      </div>
     </section>
   </div>
 
@@ -354,7 +355,12 @@
   <!-- TAB CONTENT: HISTORY -->
   <!-- ========================================== -->
   <div class="tab-content" id="tab-history">
-    <h2 class="section-title reveal">Scan History</h2>
+    <div class="history-header reveal" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+      <h2 class="section-title" style="margin-bottom: 0; padding-bottom: 0;">Scan History</h2>
+      <button class="btn btn--danger" id="clearHistoryBtn" style="display: none;">
+        🗑️ Delete All History
+      </button>
+    </div>
     <div class="history-list reveal" id="historyList">
       <div style="text-align: center; color: #86868b; padding: 40px;">No scan history found. Run a scan in the Scanner tab.</div>
     </div>
