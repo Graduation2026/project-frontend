@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sentinel AI — Threat Intelligence Library</title>
+  <meta name="description" content="A comprehensive reference library mapping common binary and memory safety vulnerabilities to CERT C rules." />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1f4da;</text></svg>" />
+  
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('sentinelTheme') || 'dark';
+      if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+      }
+    })();
+  </script>
+
+  <style>
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    body::before {
+      background: radial-gradient(circle at 50% -20%, var(--bg-secondary) 0%, var(--bg-primary) 90%);
+    }
+    
+    .lib-header {
+      text-align: center;
+      margin-bottom: 50px;
+      padding-top: 40px;
+    }
+    
+    .lib-header__badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 16px;
+      background: var(--border-glass);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-secondary);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      border: 1px solid var(--border-glass);
+    }
+    
+    .lib-title {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--text-primary) 30%, var(--text-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .lib-subtitle {
+      font-size: 18px;
+      color: var(--text-secondary);
+      max-width: 650px;
+      margin: 0 auto;
+    }
+    
+    /* Search Bar */
+    .search-container {
+      max-width: 500px;
+      margin: 0 auto 50px;
+      position: relative;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 16px 24px 16px 54px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: 100px;
+      color: var(--text-primary);
+      font-size: 16px;
+      outline: none;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    
+    .search-input:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 15px rgba(0, 113, 227, 0.2);
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    
+    /* Layout Workspace */
+    .lib-layout {
+      display: grid;
+      grid-template-columns: 1.2fr 1.8fr;
+      gap: 30px;
+      margin-bottom: 60px;
+      align-items: start;
+    }
+    
+    .cards-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 700px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    
+    /* Custom Scrollbar for sidebar */
+    .cards-sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .cards-sidebar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .cards-sidebar::-webkit-scrollbar-thumb {
+      background: var(--border-glass);
+      border-radius: 3px;
+    }
+    .cards-sidebar::-webkit-scrollbar-thumb:hover {
+      background: var(--border-glow);
+    }
+    
+    .cwe-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      text-align: left;
+    }
+    
+    .cwe-card:hover {
+      border-color: var(--border-glow);
+      background: var(--bg-glass);
+      transform: translateX(4px);
+    }
+    
+    .cwe-card.selected {
+      border-color: var(--accent-primary);
+      background: rgba(0, 113, 227, 0.08);
+      box-shadow: 0 0 15px rgba(0, 113, 227, 0.1);
+    }
+    
+    .cwe-card__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .cwe-card__id {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent-secondary);
+    }
+    
+    .severity-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .severity--critical { background: rgba(255, 59, 48, 0.15); color: #ff453a; border: 1px solid rgba(255, 59, 48, 0.3); }
+    .severity--high { background: rgba(255, 159, 10, 0.15); color: #ff9f0a; border: 1px solid rgba(255, 159, 10, 0.3); }
+    .severity--medium { background: rgba(0, 113, 227, 0.15); color: #2997ff; border: 1px solid rgba(0, 113, 227, 0.3); }
+    
+    .cwe-card__title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    
+    .cwe-card__desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    /* Code Viewer Panel */
+    .viewer-panel {
+      background: var(--bg-glass);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 30px;
+      backdrop-filter: blur(20px);
+      min-height: 600px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .viewer-panel__head {
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border-glass);
+      padding-bottom: 20px;
+    }
+    
+    .viewer-panel__title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    
+    .viewer-panel__meta {
+      font-size: 14px;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 16px;
+    }
+    
+    .viewer-panel__meta-item strong {
+      color: var(--text-primary);
+    }
+    
+    .viewer-panel__desc {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+    
+    /* Split Code Editors */
+    .code-editors-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      flex: 1;
+    }
+    
+    .editor-wrapper {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    
+    .editor-header {
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-glass);
+    }
+    
+    .editor-header--vulnerable {
+      background: rgba(255, 59, 48, 0.05);
+      color: #ff453a;
+    }
+    
+    .editor-header--secure {
+      background: rgba(52, 199, 89, 0.05);
+      color: #30d158;
+    }
+    
+    .code-block {
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.5;
+      overflow-x: auto;
+      text-align: left;
+      white-space: pre;
+    }
+    
+    .code-block--vulnerable {
+      color: #ffbaba;
+    }
+    
+    .code-block--secure {
+      color: #d4edda;
+    }
+    
+    /* Navigation Back */
+    .btn-back-container {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    
+    .btn--back {
+      background: var(--accent-gradient);
+      color: #ffffff;
+      padding: 16px 40px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+    }
+    .btn--back:hover {
+      transform: scale(1.03);
+      box-shadow: 0 10px 25px rgba(0, 113, 227, 0.4);
+    }
+    
+    @media (max-width: 992px) {
+      .lib-layout { grid-template-columns: 1fr; }
+      .cards-sidebar { max-height: 350px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container" style="opacity: 1; display: block; position: relative;">
+
+  <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+  </button>
+
+  <!-- HEADER -->
+  <header class="lib-header reveal active">
+    <div class="lib-header__badge">Threat Intelligence Center</div>
+    <h1 class="lib-title">Vulnerability Database</h1>
+    <p class="lib-subtitle">
+      Explore common software security flaws in compiled C/C++ binaries, mapped directly to secure coding standards and compiler-level mitigations.
+    </p>
+  </header>
+
+  <!-- SEARCH CONTAINER -->
+  <div class="search-container reveal active">
+    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="libSearch" class="search-input" placeholder="Search CWEs (e.g. overflow, gets, command)..." onkeyup="filterCWEs()" />
+  </div>
+
+  <!-- WORKSPACE LAYOUT -->
+  <section class="lib-layout reveal active">
+    
+    <!-- Sidebar Card Grid -->
+    <div class="cards-sidebar" id="cardsSidebar">
+      <!-- Cards will be dynamically rendered here by JavaScript -->
+    </div>
+    
+    <!-- Code Viewer Panel -->
+    <div class="viewer-panel" id="viewerPanel">
+      
+      <div class="viewer-panel__head">
+        <h2 class="viewer-panel__title" id="viewTitle">Select a Vulnerability</h2>
+        <div class="viewer-panel__meta">
+          <span class="viewer-panel__meta-item">CWE ID: <strong id="viewCweId">—</strong></span>
+          <span class="viewer-panel__meta-item">Severity: <span id="viewSeverity" class="severity-badge">—</span></span>
+          <span class="viewer-panel__meta-item">CERT C: <strong id="viewCertRule">—</strong></span>
+        </div>
+      </div>
+      
+      <div class="viewer-panel__desc" id="viewDesc">
+        Please select a CWE classification card from the left sidebar to view its detailed code audits and remediation guidelines.
+      </div>
+      
+      <!-- Split Code Editor Panel -->
+      <div class="code-editors-container" id="editorsContainer" style="display: none;">
+        
+        <!-- Vulnerable Code Editor -->
+        <div class="editor-wrapper">
+          <div class="editor-header editor-header--vulnerable">
+            <span>⚠️ Vulnerable Implementation (C)</span>
+            <span style="opacity: 0.6;">Bad API Usage</span>
+          </div>
+          <div class="code-block code-block--vulnerable" id="codeVulnerable"></div>
+        </div>
+
+        <!-- Secure Remediation Editor -->
+        <div class="editor-wrapper">
+          <div class="editor-header editor-header--secure">
+            <span>🛡️ Secure Remediation (C)</span>
+            <span style="opacity: 0.6;">Compliant Fix</span>
+          </div>
+          <div class="code-block code-block--secure" id="codeSecure"></div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- BACK TO DASHBOARD -->
+  <div class="btn-back-container" style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+    <a href="/dashboard" class="btn--back">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back to Dashboard
+    </a>
+    <a href="/" class="btn--back" style="background: var(--bg-glass); border: 1px solid var(--border-glass); color: var(--text-primary);">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Back to Welcome Page
+    </a>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>Sentinel AI &mdash; Graduation Project 2026 &bull; Ghidra + FastAPI</p>
+  </footer>
+
+</div>
+
+<script>
+  // Local Database of CWE Definitions and Code Snippets
+  const CWE_DATABASE = [
+    {
+      id: "CWE-120",
+      title: "Classic Buffer Overflow",
+      severity: "critical",
+      certRule: "STR31-C",
+      desc: "Occurs when a program copies an input buffer to a destination buffer without checking bounds. The standard strcat() and strcpy() append bytes blindly, easily overflowing stack boundaries to hijack execution pointers.",
+      vulnCode: `void vulnerable_copy(char *user_input) {\n    char dest_buffer[32];\n    // DANGER: No size checking. If user_input > 31 chars, stack overflows!\n    strcpy(dest_buffer, user_input);\n    printf("Copied: %s\\n", dest_buffer);\n}`,
+      secureCode: `void secure_copy(char *user_input) {\n    char dest_buffer[32];\n    // COMPLIANT: Copy max bounds minus 1 for null terminator\n    strncpy(dest_buffer, user_input, sizeof(dest_buffer) - 1);\n    dest_buffer[sizeof(dest_buffer) - 1] = '\\0';\n    printf("Copied: %s\\n", dest_buffer);\n}`
+    },
+    {
+      id: "CWE-121",
+      title: "Stack-based Buffer Overflow",
+      severity: "critical",
+      certRule: "ARR30-C",
+      desc: "Writing data past stack bounds corrupts local pointers, stack frames, and the saved return instruction pointer (EIP/RIP). Commonly triggered by gets() which has no built-in size limits.",
+      vulnCode: `void vulnerable_input() {\n    char name_buffer[64];\n    printf("Enter name: ");\n    // DANGER: gets() copies unlimited characters until newline!\n    gets(name_buffer);\n    printf("Hello, %s\\n", name_buffer);\n}`,
+      secureCode: `void secure_input() {\n    char name_buffer[64];\n    printf("Enter name: ");\n    // COMPLIANT: fgets() restricts reading to target size\n    if (fgets(name_buffer, sizeof(name_buffer), stdin) != NULL) {\n        printf("Hello, %s\\n", name_buffer);\n    }\n}`
+    },
+    {
+      id: "CWE-787",
+      title: "Out-of-bounds Write",
+      severity: "critical",
+      certRule: "ARR30-C",
+      desc: "The software writes past the end or before the beginning of the allocated buffer due to incorrect array indexing or pointer arithmetic. This causes heap corruption or instant segmentation faults.",
+      vulnCode: `void vulnerable_write(int index, int value) {\n    int data_array[10];\n    // DANGER: No check on index bounds before writing!\n    data_array[index] = value;\n}`,
+      secureCode: `void secure_write(int index, int value) {\n    int data_array[10];\n    // COMPLIANT: Explicit bounds check before array access\n    if (index >= 0 && index < 10) {\n        data_array[index] = value;\n    } else {\n        fprintf(stderr, "Index out of bounds!\\n");\n    }\n}`
+    },
+    {
+      id: "CWE-134",
+      title: "Format String Vulnerability",
+      severity: "high",
+      certRule: "FIO30-C",
+      desc: "Passing unvalidated user input directly into formatting functions (printf, sprintf, syslog) allows attackers to use format specifiers (%x, %s, %n) to dump memory or overwrite pointer return values.",
+      vulnCode: `void vulnerable_print(char *user_input) {\n    // DANGER: Direct printing of user-controlled string!\n    printf(user_input);\n}`,
+      secureCode: `void secure_print(char *user_input) {\n    // COMPLIANT: Enforce explicit string format specifiers\n    printf("%s", user_input);\n}`
+    },
+    {
+      id: "CWE-416",
+      title: "Use After Free",
+      severity: "high",
+      certRule: "MEM30-C",
+      desc: "Accessing dynamic heap memory after it has been freed can result in undefined behavior, crashes, or arbitrary code execution if an attacker manages to reallocate the memory chunk to a malicious payload.",
+      vulnCode: `void vulnerable_uaf() {\n    char *ptr = (char*)malloc(32);\n    free(ptr);\n    // ... intermediate operations\n    // DANGER: Pointer reused/written to after free!\n    strcpy(ptr, "bad_data");\n}`,
+      secureCode: `void secure_uaf() {\n    char *ptr = (char*)malloc(32);\n    free(ptr);\n    // COMPLIANT: Nullify pointer immediately after free\n    ptr = NULL;\n}`
+    },
+    {
+      id: "CWE-190",
+      title: "Integer Overflow",
+      severity: "high",
+      certRule: "INT30-C",
+      desc: "Arithmetic results exceed maximum bounds and wrap around. In dynamic memory allocation (malloc), multiplying sizes without validation can wrap to a small integer, leading to heap buffer corruption.",
+      vulnCode: `void* vulnerable_alloc(size_t element_size, size_t count) {\n    // DANGER: Overflow not checked. If wrap occurs, malloc(small) succeeds\n    // but caller writes full (element_size * count) data!\n    return malloc(element_size * count);\n}`,
+      secureCode: `void* secure_alloc(size_t element_size, size_t count) {\n    // COMPLIANT: Check for potential integer overflow before malloc\n    if (count != 0 && element_size > SIZE_MAX / count) {\n        return NULL; // Overflow detected\n    }\n    return malloc(element_size * count);\n}`
+    },
+    {
+      id: "CWE-476",
+      title: "NULL Pointer Dereference",
+      severity: "medium",
+      certRule: "EXP34-C",
+      desc: "Dereferencing a pointer that resolves to NULL. Often occurs when memory allocations fail or API operations return NULL, leading to segmentation faults and denial of service.",
+      vulnCode: `void vulnerable_deref() {\n    int *ptr = (int*)malloc(sizeof(int));\n    // DANGER: Writing directly to allocated address without NULL check!\n    *ptr = 42;\n}`,
+      secureCode: `void secure_deref() {\n    int *ptr = (int*)malloc(sizeof(int));\n    // COMPLIANT: Verify pointer validity before writing\n    if (ptr != NULL) {\n        *ptr = 42;\n    } else {\n        // Handle memory failure\n    }\n}`
+    },
+    {
+      id: "CWE-78",
+      title: "OS Command Injection",
+      severity: "critical",
+      certRule: "ENV33-C",
+      desc: "Passing unvalidated inputs directly to shell executors like system(). Delimiters can be injected to run commands with the privileges of the active binary process.",
+      vulnCode: `void vulnerable_command(char *user_input) {\n    char command[128];\n    sprintf(command, "ping -c 3 %s", user_input);\n    // DANGER: system() spawns shell, executing injected delimiters!\n    system(command);\n}`,
+      secureCode: `void secure_command(char *user_input) {\n    // COMPLIANT: Pass parameters as discrete arrays via execve\n    char *args[] = {"/bin/ping", "-c", "3", user_input, NULL};\n    if (fork() == 0) {\n        execve(args[0], args, NULL);\n    }\n}`
+    }
+  ];
+
+  // Render Sidebar Cards
+  function renderCards(data) {
+    const container = document.getElementById('cardsSidebar');
+    container.innerHTML = '';
+    
+    if (data.length === 0) {
+      container.innerHTML = '<div style="color:#86868b; text-align:center; padding: 20px;">No results found.</div>';
+      return;
+    }
+    
+    data.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'cwe-card';
+      card.id = 'card-' + item.id;
+      card.onclick = () => selectCWE(item.id);
+      
+      card.innerHTML = `
+        <div class="cwe-card__header">
+          <span class="cwe-card__id">${item.id}</span>
+          <span class="severity-badge severity--${item.severity}">${item.severity}</span>
+        </div>
+        <div class="cwe-card__title">${item.title}</div>
+        <div class="cwe-card__desc">${item.desc}</div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  // Load CWE details
+  function selectCWE(id) {
+    const item = CWE_DATABASE.find(c => c.id === id);
+    if (!item) return;
+    
+    // Highlight card
+    const cards = document.querySelectorAll('.cwe-card');
+    cards.forEach(c => c.classList.remove('selected'));
+    document.getElementById('card-' + id).classList.add('selected');
+    
+    // Populate panel
+    document.getElementById('viewTitle').textContent = item.title;
+    document.getElementById('viewCweId').textContent = item.id;
+    document.getElementById('viewCertRule').textContent = item.certRule;
+    document.getElementById('viewDesc').textContent = item.desc;
+    
+    // Set badges
+    const badge = document.getElementById('viewSeverity');
+    badge.className = 'severity-badge severity--' + item.severity;
+    badge.textContent = item.severity;
+    
+    // Set code blocks
+    document.getElementById('codeVulnerable').textContent = item.vulnCode;
+    document.getElementById('codeSecure').textContent = item.secureCode;
+    
+    // Reveal editors
+    document.getElementById('editorsContainer').style.display = 'grid';
+  }
+
+  // Search filter
+  function filterCWEs() {
+    const query = document.getElementById('libSearch').value.toLowerCase();
+    const filtered = CWE_DATABASE.filter(item => 
+      item.id.toLowerCase().includes(query) ||
+      item.title.toLowerCase().includes(query) ||
+      item.desc.toLowerCase().includes(query)
+    );
+    renderCards(filtered);
+  }
+
+  function setupThemeToggle() {
+    const toggleBtn = document.getElementById('themeToggle');
+    if (!toggleBtn) return;
+    
+    toggleBtn.addEventListener('click', () => {
+      if (document.documentElement.getAttribute('data-theme') === 'dark') {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('sentinelTheme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('sentinelTheme', 'dark');
+      }
+    });
+  }
+
+  // Init page
+  document.addEventListener('DOMContentLoaded', () => {
+    renderCards(CWE_DATABASE);
+    if (CWE_DATABASE.length > 0) {
+      selectCWE(CWE_DATABASE[0].id);
+    }
+    setupThemeToggle();
+  });
+</script>
+
+</body>
+</html>

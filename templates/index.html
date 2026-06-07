@@ -8,37 +8,24 @@
   <link rel="stylesheet" href="/static/css/style.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1f6e1;</text></svg>" />
   
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('sentinelTheme') || 'dark';
+      if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+      }
+    })();
+  </script>
+
   <!-- PDF Export and Markdown Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
-<!-- SPLASH SCREEN -->
-<div id="splashScreen" class="splash-screen">
-  <div class="splash-content">
-    <div class="splash-logo-container">
-      <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="splash-logo" style="animation: spin 8s linear infinite;">
-        <path d="M50 5L15 20V45C15 65 30 85 50 95C70 85 85 65 85 45V20L50 5Z" stroke="var(--text-primary)" stroke-width="4" stroke-linejoin="round"/>
-        <circle cx="50" cy="45" r="15" stroke="var(--accent-primary)" stroke-width="4"/>
-        <circle cx="50" cy="45" r="6" fill="var(--text-primary)"/>
-      </svg>
-    </div>
-    <div class="team-names" id="teamNamesContainer">
-      <div class="name-item" id="name1">Zeyad Ayman</div>
-      <div class="name-item" id="name2">Ziad Ahmed</div>
-      <div class="name-item" id="name3">Tariq Ali</div>
-      <div class="name-item" id="name4">Ahmed Mohamed</div>
-      <div class="name-item" id="name5">Adam Ahmed</div>
-      <div class="supervisor" id="supervisor">Supervised by DR: Shreif Eldyasti</div>
-    </div>
-    <div class="splash-progress">
-      <div class="splash-progress-bar" id="splashBar"></div>
-    </div>
-  </div>
-</div>
-
-<div class="app-container" id="appContainer" style="opacity: 0; display: none;">
+<div class="app-container" id="appContainer">
 
   <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -48,15 +35,28 @@
 
   <!-- HEADER -->
   <header class="header reveal">
-    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="header__logo">
-      <path d="M50 5L15 20V45C15 65 30 85 50 95C70 85 85 65 85 45V20L50 5Z" stroke="var(--text-primary)" stroke-width="4" stroke-linejoin="round"/>
-      <circle cx="50" cy="45" r="15" stroke="var(--accent-primary)" stroke-width="4"/>
-      <circle cx="50" cy="45" r="6" fill="var(--text-primary)"/>
-    </svg>
+    <a href="/" style="display: inline-block; cursor: pointer; text-decoration: none; border: none; outline: none; background: none;">
+      <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="header__logo">
+        <path d="M50 5L15 20V45C15 65 30 85 50 95C70 85 85 65 85 45V20L50 5Z" stroke="var(--text-primary)" stroke-width="4" stroke-linejoin="round"/>
+        <circle cx="50" cy="45" r="15" stroke="var(--accent-primary)" stroke-width="4"/>
+        <circle cx="50" cy="45" r="6" fill="var(--text-primary)"/>
+      </svg>
+    </a>
     <div class="header__text">
-      <div class="header__badge">
-        <span class="pulse-dot"></span>
-        System Online
+      <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap;">
+        <div class="header__badge" style="margin-bottom: 0;">
+          <span class="pulse-dot"></span>
+          System Online
+        </div>
+        <a href="/" class="header__badge" style="margin-bottom: 0; text-decoration: none; cursor: pointer; background: rgba(255,255,255,0.08); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.1); font-weight: 700;">
+          🏠 Welcome Page
+        </a>
+        <a href="/guide" target="_blank" class="header__badge" style="margin-bottom: 0; text-decoration: none; cursor: pointer; background: var(--accent-gradient); color: white; border: none; font-weight: 700;">
+          📖 User Guide
+        </a>
+        <a href="/library" target="_blank" class="header__badge" style="margin-bottom: 0; text-decoration: none; cursor: pointer; background: var(--accent-gradient); color: white; border: none; font-weight: 700;">
+          📚 Reference Library
+        </a>
       </div>
       <h1 class="header__title">Sentinel AI</h1>
       <p class="header__subtitle">

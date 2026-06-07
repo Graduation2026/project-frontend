@@ -128,6 +128,13 @@ function setupThemeToggle() {
 
 // ─── Splash Screen & Names Logic ───────────────────────────────
 function runSplashScreen() {
+  if (!splashScreen) {
+    if (appContainer) {
+      appContainer.style.display = 'block';
+      appContainer.style.opacity = '1';
+    }
+    return;
+  }
   const names = ['name1', 'name2', 'name3', 'name4', 'name5'];
   let currentNameIdx = 0;
 

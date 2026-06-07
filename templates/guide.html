@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sentinel AI — Beginner's Guide</title>
+  <meta name="description" content="A simple, non-technical guide to understanding binary vulnerability scanning and reading security reports." />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1f4d6;</text></svg>" />
+  
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('sentinelTheme') || 'dark';
+      if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+      }
+    })();
+  </script>
+
+  <style>
+    /* Custom styles for the Guide Page to look exceptionally cool & premium */
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    body::before {
+      background: radial-gradient(circle at 50% -20%, var(--bg-secondary) 0%, var(--bg-primary) 90%);
+    }
+    
+    .guide-header {
+      text-align: center;
+      margin-bottom: 60px;
+      padding-top: 40px;
+    }
+    
+    .guide-header__badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 16px;
+      background: var(--border-glass);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-secondary);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      border: 1px solid var(--border-glass);
+    }
+    
+    .guide-title {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--text-primary) 30%, var(--text-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .guide-subtitle {
+      font-size: 18px;
+      color: var(--text-secondary);
+      max-width: 650px;
+      margin: 0 auto;
+    }
+    
+    /* Analogy Grid */
+    .analogy-section {
+      margin-bottom: 80px;
+    }
+    
+    .section-headline {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 30px;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+    
+    .analogy-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+    }
+    
+    .analogy-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      backdrop-filter: blur(20px);
+    }
+    
+    .analogy-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--border-glow);
+      box-shadow: var(--shadow-card);
+    }
+    
+    .analogy-card__icon {
+      font-size: 40px;
+      margin-bottom: 20px;
+      display: inline-block;
+      padding: 12px;
+      background: var(--border-glass);
+      border-radius: 12px;
+    }
+    
+    .analogy-card__title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+    
+    .analogy-card__metaphor {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent-secondary);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+    }
+    
+    .analogy-card__text {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    
+    /* Interactive Report Anatomy Explorer */
+    .anatomy-section {
+      margin-bottom: 80px;
+    }
+    
+    .anatomy-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      backdrop-filter: blur(20px);
+    }
+    
+    .report-mockup {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .mock-element {
+      border: 1px solid var(--border-glass);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .mock-element:hover {
+      border-color: var(--accent-secondary);
+      background: var(--border-glass);
+    }
+    
+    .mock-element.selected {
+      border-color: var(--accent-primary);
+      background: rgba(0, 113, 227, 0.1);
+      box-shadow: 0 0 15px rgba(0, 113, 227, 0.2);
+    }
+    
+    .mock-element__label {
+      position: absolute;
+      top: -10px;
+      left: 15px;
+      background: var(--bg-secondary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-glass);
+      text-transform: uppercase;
+    }
+    
+    .anatomy-explanation {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: var(--bg-glass);
+      border: 1px dashed var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      min-height: 300px;
+    }
+    
+    .explanation-placeholder {
+      text-align: center;
+      color: var(--text-muted);
+    }
+    
+    .explanation-content {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    
+    .explanation-content.active {
+      display: block;
+    }
+    
+    .explanation-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .explanation-metaphor {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-secondary);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+    
+    .explanation-body {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    
+    .explanation-body p {
+      margin-bottom: 12px;
+    }
+    
+    .explanation-body ul {
+      margin-left: 20px;
+      margin-bottom: 12px;
+    }
+    
+    .explanation-body li {
+      margin-bottom: 6px;
+    }
+    
+    /* Footer Action */
+    .guide-actions {
+      text-align: center;
+      margin-bottom: 80px;
+    }
+    
+    .btn--back {
+      background: var(--accent-gradient);
+      color: #ffffff;
+      padding: 16px 40px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+    }
+    .btn--back:hover {
+      transform: scale(1.03);
+      box-shadow: 0 10px 25px rgba(0, 113, 227, 0.4);
+    }
+    
+    @media (max-width: 768px) {
+      .analogy-grid { grid-template-columns: 1fr; }
+      .anatomy-container { grid-template-columns: 1fr; }
+      .guide-title { font-size: 36px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container" style="opacity: 1; display: block; position: relative;">
+
+  <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+  </button>
+
+  <!-- HEADER -->
+  <header class="guide-header reveal active">
+    <div class="guide-header__badge">Beginner-Friendly Walkthrough</div>
+    <h1 class="guide-title">How Sentinel Scans Code</h1>
+    <p class="guide-subtitle">
+      No security background? No problem. Read this simple guide to understand the metaphors and metrics behind our software security report.
+    </p>
+  </header>
+
+  <!-- ANALOGIES SECTION -->
+  <section class="analogy-section reveal active">
+    <h2 class="section-headline">The Four Core Metaphors</h2>
+    <div class="analogy-grid">
+      
+      <!-- Card 1: Binary -->
+      <div class="analogy-card">
+        <span class="analogy-card__icon">📦</span>
+        <h3 class="analogy-card__title">The Binary file</h3>
+        <div class="analogy-card__metaphor">Metaphor: The Locked Box of Recipes</div>
+        <p class="analogy-card__text">
+          A "binary" (like an <code>.exe</code> file) is a program compiled for computers. Think of it as a **locked wooden box** containing a recipe book. The computer can open the box and follow the recipes instantly, but a human cannot read the book directly because it is written in machine code. To see if it is safe, we need special tools to look inside.
+        </p>
+      </div>
+
+      <!-- Card 2: CFG -->
+      <div class="analogy-card">
+        <span class="analogy-card__icon">🗺️</span>
+        <h3 class="analogy-card__title">The Control Flow Graph</h3>
+        <div class="analogy-card__metaphor">Metaphor: The Road Map</div>
+        <p class="analogy-card__text">
+          When the program runs, it makes choices (e.g., "If password is correct, go right; else, go left"). We map these choice points into a **Control Flow Graph (CFG)**. Think of this as a **road map** representing all intersections and highways inside the program. A vulnerability is like a road segment that ends in a cliff without a guard rail.
+        </p>
+      </div>
+
+      <!-- Card 3: GNN -->
+      <div class="analogy-card">
+        <span class="analogy-card__icon">🕵️</span>
+        <h3 class="analogy-card__title">The GNN Classifier</h3>
+        <div class="analogy-card__metaphor">Metaphor: The Road Safety Inspector</div>
+        <p class="analogy-card__text">
+          A **Graph Neural Network (GNN)** is our custom AI model. Think of it as a **highly trained road inspector**. It looks at the Road Map we drew and checks the shape of the intersections. It doesn't read the code line-by-line; instead, it recognizes if the connections look like a dangerous road setup where an accident is likely to happen.
+        </p>
+      </div>
+
+      <!-- Card 4: RAG -->
+      <div class="analogy-card">
+        <span class="analogy-card__icon">📘</span>
+        <h3 class="analogy-card__title">The RAG Security Auditor</h3>
+        <div class="analogy-card__metaphor">Metaphor: The Engineer with the Safety Manual</div>
+        <p class="analogy-card__text">
+          Once the GNN Inspector flags a dangerous intersection, the **Retrieval-Augmented Generation (RAG)** assistant steps in. Think of this as an **expert engineer** who opens the official **National Road Construction Safety Manual** (standard rules like CWE and CERT C), explains *why* the road is unsafe, and gives the builders a blueprint on how to rebuild it securely.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- REPORT EXPLORER SECTION -->
+  <section class="anatomy-section reveal active">
+    <h2 class="section-headline">Interactive Report Anatomy</h2>
+    <p style="text-align: center; color: var(--text-secondary); margin-bottom: 40px; margin-top: -15px;">
+      Click on any highlighted section of the mock report below to learn what it means in simple terms.
+    </p>
+    
+    <div class="anatomy-container">
+      
+      <!-- Mockup Column -->
+      <div class="report-mockup">
+        
+        <!-- Element 1: Verdict -->
+        <div class="mock-element selected" onclick="selectElement('verdict')" id="el-verdict">
+          <div class="mock-element__label">Verdict Box</div>
+          <div style="font-weight: 700; color: var(--danger-color); font-size: 16px; margin-bottom: 4px;">⚠️ VULNERABLE</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Critical vulnerability signatures detected. Immediate remediation recommended.</div>
+        </div>
+
+        <!-- Element 2: Confidence -->
+        <div class="mock-element" onclick="selectElement('confidence')" id="el-confidence">
+          <div class="mock-element__label">Threat Confidence</div>
+          <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">Threat Confidence: 89.2%</div>
+          <div style="width: 100%; height: 6px; background: var(--border-glass); border-radius: 3px;">
+            <div style="width: 89%; height: 100%; background: var(--danger-color); border-radius: 3px;"></div>
+          </div>
+        </div>
+
+        <!-- Element 3: Labeled List -->
+        <div class="mock-element" onclick="selectElement('metadata')" id="el-metadata">
+          <div class="mock-element__label">Forensic Metadata</div>
+          <div style="font-size: 12px; font-family: monospace; line-height: 1.5; color: var(--text-secondary);">
+            • Filename: test_login.exe<br/>
+            • SHA-256: 3a2c9f1b...<br/>
+            • Evaluated: 12 functions
+          </div>
+        </div>
+
+        <!-- Element 4: Remediation -->
+        <div class="mock-element" onclick="selectElement('remediation')" id="el-remediation">
+          <div class="mock-element__label">Secure Code Fix</div>
+          <div style="font-size: 11px; font-family: monospace; padding: 8px; background: rgba(0,0,0,0.4); border-left: 3px solid var(--safe-color); border-radius: 4px; color: var(--safe-color);">
+            // Secure rewrite using strncat<br/>
+            strncat(dest, src, sizeof(dest) - strlen(dest) - 1);
+          </div>
+        </div>
+        
+      </div>
+
+      <!-- Explanation Column -->
+      <div class="anatomy-explanation" id="explanationBox">
+        
+        <div class="explanation-placeholder" id="placeholderText">
+          <h3>👈 Select an Element</h3>
+          <p style="margin-top: 10px; font-size: 14px;">Click on any section of the mockup report to reveal its non-technical explanation and real-world significance.</p>
+        </div>
+
+        <!-- Verdict Explanation -->
+        <div class="explanation-content" id="exp-verdict">
+          <div class="explanation-title">🚨 The Verdict Box</div>
+          <div class="explanation-metaphor">Metaphor: The Safety Flag</div>
+          <div class="explanation-body">
+            <p>The **Verdict** is the final "Yes or No" outcome of the entire scan.</p>
+            <ul>
+              <li><strong>SAFE</strong>: The AI scanned the entire application map and found no dangerous roads. It is ready for deployment.</li>
+              <li><strong>VULNERABLE</strong>: The AI found at least one function containing structure patterns that represent a known security threat. It means the code needs to be modified before releasing.</li>
+            </ul>
+            <p><em>Analogy: Like a traffic light. Green means safe to go; Red means stop and fix the hazards.</em></p>
+          </div>
+        </div>
+
+        <!-- Confidence Explanation -->
+        <div class="explanation-content" id="exp-confidence">
+          <div class="explanation-title">📊 Threat Confidence</div>
+          <div class="explanation-metaphor">Metaphor: The Inspector's Certainty</div>
+          <div class="explanation-body">
+            <p>The **Threat Confidence** represents how sure the AI model is of its classification verdict.</p>
+            <p>If the model classifies a function as vulnerable with **89.2% confidence**, it means the structural patterns inside the function align very strongly with known historical exploit shapes.</p>
+            <p>High confidence values require immediate engineering review, while low confidence scores (close to 50%) indicate potential border cases or minor anomalies.</p>
+          </div>
+        </div>
+
+        <!-- Metadata Explanation -->
+        <div class="explanation-content" id="exp-metadata">
+          <div class="explanation-title">🔍 Forensic Metadata</div>
+          <div class="explanation-metaphor">Metaphor: The Car's License Plate & Diagnostic Stats</div>
+          <div class="explanation-body">
+            <p>This section lists identification details for the file under analysis:</p>
+            <ul>
+              <li><strong>Filename</strong>: The name of the file you uploaded.</li>
+              <li><strong>SHA-256 Checksum</strong>: A unique, mathematically generated signature. Think of it as a digital fingerprint—even changing a single letter in the file changes this code completely, proving the report matches this exact file.</li>
+              <li><strong>Evaluated Functions</strong>: The total count of logical tasks/functions inside the binary that the GNN inspector scanned.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Remediation Explanation -->
+        <div class="explanation-content" id="exp-remediation">
+          <div class="explanation-title">🛠️ Secure Code Fix</div>
+          <div class="explanation-metaphor">Metaphor: The Road Reconstruction Blueprint</div>
+          <div class="explanation-body">
+            <p>This is the most actionable part of the report. For every flagged vulnerability, the RAG assistant displays a block of **corrected source code**.</p>
+            <p>It shows developers exactly how to write the function securely (for example, replacing an unsafe, unchecked function like <code>strcpy</code> with a safe, bounded copy like <code>strncat</code>).</p>
+            <p>By implementing this fix, developers remove the weak spot and secure the application.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- BACK BUTTON -->
+  <div class="guide-actions" style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+    <a href="/dashboard" class="btn--back">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back to Dashboard
+    </a>
+    <a href="/" class="btn--back" style="background: var(--bg-glass); border: 1px solid var(--border-glass); color: var(--text-primary);">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Back to Welcome Page
+    </a>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>Sentinel AI &mdash; Graduation Project 2026 &bull; Ghidra + FastAPI</p>
+  </footer>
+
+</div>
+
+<script>
+  // Simple JavaScript to handle Interactive Report Explorer
+  function selectElement(elementId) {
+    const elements = document.querySelectorAll('.mock-element');
+    elements.forEach(el => el.classList.remove('selected'));
+    
+    document.getElementById('placeholderText').style.display = 'none';
+    
+    const contents = document.querySelectorAll('.explanation-content');
+    contents.forEach(content => content.classList.remove('active'));
+    
+    document.getElementById('el-' + elementId).classList.add('selected');
+    document.getElementById('exp-' + elementId).classList.add('active');
+  }
+
+  function setupThemeToggle() {
+    const toggleBtn = document.getElementById('themeToggle');
+    if (!toggleBtn) return;
+    
+    toggleBtn.addEventListener('click', () => {
+      if (document.documentElement.getAttribute('data-theme') === 'dark') {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('sentinelTheme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('sentinelTheme', 'dark');
+      }
+    });
+  }
+  
+  // Set default selection
+  document.addEventListener('DOMContentLoaded', () => {
+    selectElement('verdict');
+    setupThemeToggle();
+  });
+</script>
+
+</body>
+</html>
