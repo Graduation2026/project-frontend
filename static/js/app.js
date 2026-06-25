@@ -103,7 +103,21 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollReveal();
   setupThemeToggle();
   setupChatbot();
+  restoreCurrentScan();
 });
+
+function restoreCurrentScan() {
+  try {
+    const stored = sessionStorage.getItem('sentinelCurrentScan');
+    if (stored) {
+      const data = JSON.parse(stored);
+      lastResult = data;
+      displayResults(data, true);
+    }
+  } catch (e) {
+    console.error("Failed to restore current scan:", e);
+  }
+}
 
 // ─── Theme Toggle ──────────────────────────────────────────────
 function setupThemeToggle() {
@@ -224,7 +238,7 @@ async function loadSystemStats() {
       const meta = await metaRes.json();
       document.getElementById('statAccuracy').textContent = (meta.accuracy * 100).toFixed(1) + '%';
       document.getElementById('statSamples').textContent = meta.total_samples.toLocaleString();
-      document.getElementById('statTrees').textContent = meta.n_estimators.toLocaleString();
+      document.getElementById('statFolds').textContent = meta.folds + ' folds';
     }
   } catch (e) {
     document.getElementById('statStatus').textContent = 'Error';
@@ -295,11 +309,13 @@ function setupChatbot() {
   if (toggleChatBtn) {
     toggleChatBtn.addEventListener('click', () => {
       chatDrawer.classList.toggle('open');
+      sessionStorage.setItem('sentinelChatOpen', chatDrawer.classList.contains('open') ? 'true' : 'false');
     });
   }
   if (closeChatBtn) {
     closeChatBtn.addEventListener('click', () => {
       chatDrawer.classList.remove('open');
+      sessionStorage.setItem('sentinelChatOpen', 'false');
     });
   }
   if (sendChatBtn) {
@@ -399,7 +415,7 @@ function appendUserChatMessage(text) {
 function appendAssistantChatMessage(text) {
   const msgEl = document.createElement('div');
   msgEl.className = 'chat-message chat-message--assistant';
-  msgEl.innerHTML = marked.parse(text);
+  msgEl.innerHTML = DOMPurify.sanitize(marked.parse(text));
   chatMessages.appendChild(msgEl);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -450,12 +466,28 @@ async function sendChatMessage() {
       appendAssistantChatMessage(data.response);
       chatHistory.push({ role: 'user', content: query });
       chatHistory.push({ role: 'assistant', content: data.response });
+      saveCurrentChatHistory();
     } else {
       appendAssistantChatMessage(`Error: ${data.detail?.message || data.detail || 'Failed to get secure helper feedback.'}`);
     }
   } catch (error) {
     removeSystemLoadingChatMessage(loadingId);
     appendAssistantChatMessage(`Network error: ${error.message}`);
+  }
+}
+
+function saveCurrentChatHistory() {
+  if (lastResult) {
+    lastResult.chat_history = chatHistory;
+    try {
+      sessionStorage.setItem('sentinelCurrentScan', JSON.stringify(lastResult));
+    } catch (e) { }
+    
+    const idx = scanHistory.findIndex(entry => entry.timestamp === lastResult.timestamp);
+    if (idx !== -1) {
+      scanHistory[idx].chat_history = chatHistory;
+      saveScanHistoryToLocalStorage();
+    }
   }
 }
 
@@ -548,7 +580,12 @@ function completeProgress() {
 }
 
 // ─── Display Results & Logic ──────────────────────────────────
-function displayResults(data) {
+function displayResults(data, restoreChat = false) {
+  lastResult = data;
+  try {
+    sessionStorage.setItem('sentinelCurrentScan', JSON.stringify(data));
+  } catch (e) { }
+
   const isSafe = data.label === 0;
   const banner = document.getElementById('verdictBanner');
 
@@ -577,7 +614,7 @@ function displayResults(data) {
   // ── Render RAG Markdown Report and Set PDF URL ──
   const reportContainer = document.getElementById('ragReportContent');
   if (reportContainer) {
-    reportContainer.innerHTML = marked.parse(data.report_markdown || 'No report available.');
+    reportContainer.innerHTML = DOMPurify.sanitize(marked.parse(data.report_markdown || 'No report available.'));
   }
 
   const downloadPdfLink = document.getElementById('downloadPdfLink');
@@ -592,28 +629,55 @@ function displayResults(data) {
 
   // Set chat sidebar context
   chatHistory = [];
+  chatMessages.innerHTML = '';
+
   if (data.flagged_functions && data.flagged_functions.length > 0) {
     currentDecompiledContext = data.flagged_functions[0].decompiled_code;
     
-    // Welcome message to user
-    chatMessages.innerHTML = '';
-    const welcomeEl = document.createElement('div');
-    welcomeEl.className = 'chat-message chat-message--assistant';
-    welcomeEl.innerHTML = `Our GNN model has flagged <strong>${data.flagged_functions_count} suspicious function(s)</strong>.
-    I have pre-loaded the context for function <code>${data.flagged_functions[0].function_name}</code>.<br/><br/>
-    Ask me how to remediate it or explain the violated standards!`;
-    chatMessages.appendChild(welcomeEl);
-    
-    // Slide open chat sidebar automatically
-    setTimeout(() => {
-      chatDrawer.classList.add('open');
-    }, 1500);
+    if (restoreChat && data.chat_history && data.chat_history.length > 0) {
+      chatHistory = [...data.chat_history];
+      data.chat_history.forEach(msg => {
+        if (msg.role === 'user') {
+          appendUserChatMessage(msg.content);
+        } else {
+          appendAssistantChatMessage(msg.content);
+        }
+      });
+      if (sessionStorage.getItem('sentinelChatOpen') === 'true') {
+        chatDrawer.classList.add('open');
+      }
+    } else {
+      // Welcome message to user
+      const welcomeEl = document.createElement('div');
+      welcomeEl.className = 'chat-message chat-message--assistant';
+      welcomeEl.innerHTML = `Our GNN model has flagged <strong>${data.flagged_functions_count} suspicious function(s)</strong>.
+      I have pre-loaded the context for function <code>${data.flagged_functions[0].function_name}</code>.<br/><br/>
+      Ask me how to remediate it or explain the violated standards!`;
+      chatMessages.appendChild(welcomeEl);
+      
+      // Slide open chat sidebar automatically
+      setTimeout(() => {
+        chatDrawer.classList.add('open');
+        sessionStorage.setItem('sentinelChatOpen', 'true');
+      }, 1500);
+    }
   } else {
     currentDecompiledContext = "";
-    chatMessages.innerHTML = `
-      <div class="chat-message chat-message--assistant">
-        No functions were flagged as vulnerable! Your code appears clean and compliant with SEI CERT C coding standards. Let me know if you want to ask any general C security questions!
-      </div>`;
+    if (restoreChat && data.chat_history && data.chat_history.length > 0) {
+      chatHistory = [...data.chat_history];
+      data.chat_history.forEach(msg => {
+        if (msg.role === 'user') {
+          appendUserChatMessage(msg.content);
+        } else {
+          appendAssistantChatMessage(msg.content);
+        }
+      });
+    } else {
+      chatMessages.innerHTML = `
+        <div class="chat-message chat-message--assistant">
+          No functions were flagged as vulnerable! Your code appears clean and compliant with SEI CERT C coding standards. Let me know if you want to ask any general C security questions!
+        </div>`;
+    }
   }
 
   // Logical Feature Breakdown
@@ -743,7 +807,31 @@ function exportToPdf() {
   });
 }
 
-// ─── Scan History ─────────────────────────────────────────────
+// ─── Scan History & LocalStorage Persistence ──────────────────
+function saveScanHistoryToLocalStorage() {
+  let success = false;
+  while (scanHistory.length > 0) {
+    try {
+      localStorage.setItem('sentinelHistory', JSON.stringify(scanHistory));
+      success = true;
+      break;
+    } catch (e) {
+      if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014) {
+        // Drop the oldest entry and try again to stay within local storage size limit
+        console.warn("LocalStorage quota exceeded. Evicting oldest scan history entry...");
+        scanHistory.pop();
+      } else {
+        break;
+      }
+    }
+  }
+  if (!success && scanHistory.length === 0) {
+    try {
+      localStorage.removeItem('sentinelHistory');
+    } catch (e) { }
+  }
+}
+
 function addToHistory(data) {
   const entry = {
     filename: data.filename,
@@ -757,18 +845,25 @@ function addToHistory(data) {
     report_markdown: data.report_markdown,
     pdf_url: data.pdf_url,
     flagged_functions: data.flagged_functions,
-    flagged_functions_count: data.flagged_functions_count
+    flagged_functions_count: data.flagged_functions_count,
+    chat_history: data.chat_history || []
   };
   scanHistory.unshift(entry);
   if (scanHistory.length > 20) scanHistory.pop();
-  try { localStorage.setItem('sentinelHistory', JSON.stringify(scanHistory)); } catch (e) { }
+  saveScanHistoryToLocalStorage();
   renderHistory();
 }
 
 function loadHistory() {
   try {
     const stored = localStorage.getItem('sentinelHistory');
-    if (stored) { scanHistory = JSON.parse(stored); renderHistory(); }
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        scanHistory = parsed;
+        renderHistory();
+      }
+    }
   } catch (e) { }
 }
 
@@ -810,7 +905,8 @@ function renderHistory() {
       uploadSection.style.display = 'none';
       progressSection.classList.remove('visible');
       lastResult = entry;
-      displayResults(entry);
+      sessionStorage.setItem('sentinelCurrentScan', JSON.stringify(entry));
+      displayResults(entry, true);
     });
 
     const deleteBtn = item.querySelector('.history-item__delete');
@@ -829,14 +925,14 @@ function renderHistory() {
 
 function deleteHistoryItem(timestamp) {
   scanHistory = scanHistory.filter(entry => entry.timestamp !== timestamp);
-  try { localStorage.setItem('sentinelHistory', JSON.stringify(scanHistory)); } catch (e) { }
+  saveScanHistoryToLocalStorage();
   renderHistory();
 }
 
 function clearAllHistory() {
   if (confirm("Are you sure you want to delete all scan history? This action cannot be undone.")) {
     scanHistory = [];
-    try { localStorage.setItem('sentinelHistory', JSON.stringify(scanHistory)); } catch (e) { }
+    saveScanHistoryToLocalStorage();
     renderHistory();
   }
 }
