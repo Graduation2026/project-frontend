@@ -528,8 +528,16 @@ async function startAnalysis() {
 
     setTimeout(() => {
       progressSection.classList.remove('visible');
-      displayResults(data);
-      addToHistory(data);
+      try {
+        displayResults(data);
+        addToHistory(data);
+      } catch (displayError) {
+        console.error('displayResults crashed:', displayError);
+        alert('Error displaying results: ' + displayError.message);
+        uploadSection.style.display = 'block';
+        analyzeBtn.disabled = false;
+        analyzeBtn.querySelector('span').textContent = 'Start Analysis';
+      }
     }, 800);
 
   } catch (error) {
@@ -714,14 +722,6 @@ function displayResults(data, restoreChat = false) {
       }
 
       item.innerHTML = detailHtml;
-      featureList.appendChild(item);
-    });
-  } else if (data.top_features && data.top_features.length > 0) {
-    // Fallback for backward compat with old response shape
-    data.top_features.slice(0, 8).forEach(feat => {
-      const item = document.createElement('div');
-      item.className = 'feature-item';
-      item.innerHTML = `<div class="feature-item__head"><div class="feature-item__name">${escapeHtml(feat.feature)}</div></div>`;
       featureList.appendChild(item);
     });
   } else {
@@ -911,7 +911,7 @@ function renderHistory() {
     item.innerHTML = `
       <div class="history-item__verdict history-item__verdict--${isSafe ? 'safe' : 'vulnerable'}"></div>
       <div class="history-item__name">${escapeHtml(entry.filename)}</div>
-      <div class="history-item__confidence" style="color:var(--${isSafe ? 'safe' : 'danger'}-color)">
+      <div class="history-item__verdict-text" style="color:var(--${isSafe ? 'safe' : 'danger'}-color)">
         ${histVerdictShort}
       </div>
       <div class="history-item__time">${new Date(entry.timestamp).toLocaleTimeString()}</div>
@@ -987,7 +987,8 @@ function formatFileSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 }
 function escapeHtml(str) {
-  const div = document.createElement('div'); div.appendChild(document.createTextNode(str)); return div.innerHTML;
+  if (str == null) return '';
+  const div = document.createElement('div'); div.appendChild(document.createTextNode(String(str))); return div.innerHTML;
 }
 
 // ─── C Vulnerability Templates Loader ──────────────────────────

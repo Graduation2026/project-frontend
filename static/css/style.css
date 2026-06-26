@@ -279,7 +279,7 @@ body::before {
 .history-item__verdict--safe { background: var(--safe-color); }
 .history-item__verdict--vulnerable { background: var(--danger-color); }
 .history-item__name { flex: 1; font-weight: 600; font-size: 15px; padding-right: 35px; }
-.history-item__confidence { font-family: var(--font-mono); font-size: 14px; font-weight: 600; }
+.history-item__verdict-text { font-family: var(--font-mono); font-size: 14px; font-weight: 600; }
 .history-item__time { font-size: 13px; color: var(--text-secondary); margin-right: 25px; }
 .history-item__delete {
   position: absolute; right: 24px;
