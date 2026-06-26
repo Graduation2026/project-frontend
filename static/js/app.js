@@ -595,14 +595,19 @@ function displayResults(data, restoreChat = false) {
     ? '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
     : '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
 
-  document.getElementById('verdictTitle').textContent = isSafe ? "CLEAN" : "VULNERABLE";
+  // Use the verdict string from the API ("X out of N functions were vulnerable")
+  document.getElementById('verdictTitle').textContent = data.verdict || (isSafe ? 'No Vulnerabilities Found' : 'Vulnerabilities Detected');
   document.getElementById('verdictSubtitle').textContent = isSafe
     ? 'No significant vulnerability patterns detected. File aligns with known-safe baselines.'
     : 'Critical vulnerability signatures detected. Immediate remediation recommended.';
 
-  const conf = (data.confidence * 100);
-  document.getElementById('confidenceFill').style.width = conf + '%';
-  document.getElementById('confidenceValue').textContent = conf.toFixed(1) + '%';
+  // Populate scan metrics
+  const metricTotal = document.getElementById('metricTotalFunctions');
+  const metricActual = document.getElementById('metricActualFunctions');
+  const metricBoilerplate = document.getElementById('metricBoilerplateFunctions');
+  if (metricTotal) metricTotal.textContent = data.total_functions || 0;
+  if (metricActual) metricActual.textContent = data.actual_count || 0;
+  if (metricBoilerplate) metricBoilerplate.textContent = data.boilerplate_count || 0;
 
   document.getElementById('resFilename').textContent = data.filename;
   document.getElementById('resSha256').textContent = data.sha256;
@@ -680,50 +685,61 @@ function displayResults(data, restoreChat = false) {
     }
   }
 
-  // Logical Feature Breakdown
+  // --- Render Category B (Actual Code Functions) ---
   const featureList = document.getElementById('featureList');
   featureList.innerHTML = '';
 
-  if (data.top_features && data.top_features.length > 0) {
-    data.top_features.slice(0, 8).forEach(feat => {
-      const isDanger = !isSafe && feat.feature.includes("(Vulnerable)");
-
-      let exp = FEATURE_EXPLANATIONS[feat.feature];
-      if (!exp) {
-        const isVulnFeature = feat.feature.includes("(Vulnerable)");
-        const funcName = feat.feature.split(" (")[0];
-        if (isVulnFeature) {
-          exp = {
-            desc: `GNN model detected highly suspicious Control Flow Graph (CFG) patterns inside function '${funcName}'.`,
-            risk: `High Risk — The control flow structures correlate heavily with standard memory security flaws, indicating a high risk of buffer overflow or out-of-bounds write.`,
-            mitigation: `Inspect buffer sizes, replace unchecked string operations, and follow secure SEI CERT C boundaries.`,
-            cwe: `CWE-119: Memory Safety Flaws`
-          };
-        } else {
-          exp = {
-            desc: `GNN model successfully verified function '${funcName}' as safe.`,
-            risk: `Low Risk — The function Control Flow Graph aligns with compliant and secure coding paradigms.`,
-            mitigation: `Maintain standard secure development lifecycles.`,
-            cwe: `Compliant`
-          };
-        }
-      }
+  if (data.category_b_functions && data.category_b_functions.length > 0) {
+    data.category_b_functions.forEach(func => {
+      const isDanger = func.is_vulnerable;
+      const statusBadge = isDanger
+        ? '<span style="background: var(--danger-color, #ff3b30); color: #fff; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;">⚠️ Vulnerable</span>'
+        : '<span style="background: var(--safe-color, #34c759); color: #fff; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;">✅ Safe</span>';
 
       const item = document.createElement('div');
       item.className = 'feature-item ' + (isDanger ? 'danger' : '');
-      item.innerHTML = `
+
+      let detailHtml = `
         <div class="feature-item__head">
-          <div class="feature-item__name">${escapeHtml(feat.feature)}</div>
-          <div class="feature-item__impact">GNN Score: ${(feat.importance * 100).toFixed(1)}%</div>
+          <div class="feature-item__name">${escapeHtml(func.function_name)}</div>
+          <div class="feature-item__impact">${statusBadge}</div>
         </div>
-        <div class="feature-item__desc"><strong>Context:</strong> ${exp.desc}</div>
-        <div class="feature-item__risk"><strong>Threat Intel:</strong> ${exp.risk}</div>
-        <div class="feature-item__risk"><strong>Mitigation:</strong> ${exp.mitigation} <br/> <strong>Standard:</strong> ${exp.cwe}</div>
+        <div class="feature-item__desc" style="margin-top: 8px;">${escapeHtml(func.explanation || '')}</div>
       `;
+
+      if (isDanger && func.cwe_id) {
+        detailHtml += `
+          <div class="feature-item__risk" style="margin-top: 6px;"><strong>CWE:</strong> ${escapeHtml(func.cwe_id)}</div>
+        `;
+      }
+
+      item.innerHTML = detailHtml;
+      featureList.appendChild(item);
+    });
+  } else if (data.top_features && data.top_features.length > 0) {
+    // Fallback for backward compat with old response shape
+    data.top_features.slice(0, 8).forEach(feat => {
+      const item = document.createElement('div');
+      item.className = 'feature-item';
+      item.innerHTML = `<div class="feature-item__head"><div class="feature-item__name">${escapeHtml(feat.feature)}</div></div>`;
       featureList.appendChild(item);
     });
   } else {
-    featureList.innerHTML = '<div style="color: #86868b; font-size: 14px;">No critical features extracted.</div>';
+    featureList.innerHTML = '<div style="color: #86868b; font-size: 14px;">No actual code functions found.</div>';
+  }
+
+  // --- Render Category A (Boilerplate & Runtime Stubs) ---
+  const boilerplateList = document.getElementById('boilerplateList');
+  if (boilerplateList) {
+    if (data.category_a_functions && data.category_a_functions.length > 0) {
+      const names = data.category_a_functions.map(f => `<code style="background: rgba(128,128,128,0.15); padding: 2px 8px; border-radius: 4px; font-size: 13px; margin: 3px;">${escapeHtml(f.function_name)}</code>`);
+      boilerplateList.innerHTML = `
+        <p style="margin-bottom: 10px; color: var(--text-secondary);">These ${data.category_a_functions.length} functions are compiler-generated boilerplate, CRT startup stubs, or standard library wrappers. They were excluded from vulnerability analysis.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 4px;">${names.join('')}</div>
+      `;
+    } else {
+      boilerplateList.innerHTML = '<div style="color: #86868b; font-size: 14px;">No boilerplate functions detected.</div>';
+    }
   }
 
   if (exportPdfBtn) exportPdfBtn.style.display = 'block';
@@ -837,7 +853,7 @@ function addToHistory(data) {
     filename: data.filename,
     prediction: data.prediction,
     label: data.label,
-    confidence: data.confidence,
+    verdict: data.verdict,
     timestamp: data.timestamp,
     sha256: data.sha256,
     timing: data.timing,
@@ -846,6 +862,11 @@ function addToHistory(data) {
     pdf_url: data.pdf_url,
     flagged_functions: data.flagged_functions,
     flagged_functions_count: data.flagged_functions_count,
+    category_a_functions: data.category_a_functions,
+    category_b_functions: data.category_b_functions,
+    total_functions: data.total_functions,
+    boilerplate_count: data.boilerplate_count,
+    actual_count: data.actual_count,
     chat_history: data.chat_history || []
   };
   scanHistory.unshift(entry);
@@ -882,11 +903,16 @@ function renderHistory() {
     const item = document.createElement('div');
     item.className = 'history-item';
     item.style.cursor = 'pointer'; 
+    // Build verdict short string for history: "X/N vulnerable"
+    const histFlagged = entry.flagged_functions_count || 0;
+    const histActual = entry.actual_count || 0;
+    const histVerdictShort = `${histFlagged}/${histActual} vulnerable`;
+
     item.innerHTML = `
       <div class="history-item__verdict history-item__verdict--${isSafe ? 'safe' : 'vulnerable'}"></div>
       <div class="history-item__name">${escapeHtml(entry.filename)}</div>
       <div class="history-item__confidence" style="color:var(--${isSafe ? 'safe' : 'danger'}-color)">
-        ${(entry.confidence * 100).toFixed(1)}%
+        ${histVerdictShort}
       </div>
       <div class="history-item__time">${new Date(entry.timestamp).toLocaleTimeString()}</div>
       <button class="history-item__delete" title="Delete scan">&times;</button>

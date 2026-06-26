@@ -238,12 +238,22 @@
           <div class="verdict-banner__icon" id="verdictIcon"></div>
           <div class="verdict-banner__title" id="verdictTitle">—</div>
           <div class="verdict-banner__subtitle" id="verdictSubtitle">—</div>
-          <div class="confidence-meter">
-            <div class="confidence-meter__label">Threat Confidence Level</div>
-            <div class="confidence-meter__bar">
-              <div class="confidence-meter__fill" id="confidenceFill"></div>
-            </div>
-            <div class="confidence-meter__value" id="confidenceValue">—</div>
+
+        </div>
+
+        <!-- Scan Metrics -->
+        <div class="scan-metrics reveal" style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 30px;">
+          <div class="stat-card" style="flex: 1; min-width: 180px; max-width: 260px;">
+            <div class="stat-card__value" id="metricTotalFunctions">—</div>
+            <div class="stat-card__label">Total Functions Evaluated</div>
+          </div>
+          <div class="stat-card" style="flex: 1; min-width: 180px; max-width: 260px;">
+            <div class="stat-card__value" id="metricActualFunctions">—</div>
+            <div class="stat-card__label">Actual Code Functions Scanned</div>
+          </div>
+          <div class="stat-card" style="flex: 1; min-width: 180px; max-width: 260px;">
+            <div class="stat-card__value" id="metricBoilerplateFunctions">—</div>
+            <div class="stat-card__label">Boilerplate &amp; Runtime Stubs Found</div>
           </div>
         </div>
 
@@ -281,20 +291,30 @@
             </div>
           </div>
 
-          <!-- Top Features Card (Logical Explanations) -->
+          <!-- Category B: Actual Code Functions -->
           <div class="detail-card reveal" style="transition-delay: 0.2s;">
             <div class="detail-card__title">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
-              Professional Threat Analysis
+              Actual Code Functions (Category B)
             </div>
             <div class="feature-list" id="featureList">
               <div style="color: #86868b; font-size: 14px;">
-                Upload a binary to see the enterprise-grade logical breakdown of anomalies.
+                Upload a binary to see the categorized analysis of actual code functions.
               </div>
             </div>
           </div>
         </div>
-        
+
+        <!-- Category A: Boilerplate & Runtime Stubs -->
+        <div class="detail-card reveal" style="margin-top: 30px; transition-delay: 0.3s;">
+          <div class="detail-card__title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Boilerplate &amp; Runtime Stubs (Category A)
+          </div>
+          <div id="boilerplateList" style="color: #86868b; font-size: 14px; line-height: 1.8;">
+            Compiler-generated boilerplate, CRT stubs, and library wrappers will be listed here after scanning.
+          </div>
+        </div>
         <!-- RAG Security Report Card -->
         <div class="detail-card reveal" style="margin-top: 30px; grid-column: 1 / -1; width: 100%;">
           <div class="detail-card__title" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px;">
