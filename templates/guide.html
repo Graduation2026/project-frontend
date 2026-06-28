@@ -432,12 +432,15 @@
           <div style="font-size: 11px; color: var(--text-secondary);">Critical vulnerability signatures detected. Immediate remediation recommended.</div>
         </div>
 
-        <!-- Element 2: Confidence -->
-        <div class="mock-element" onclick="selectElement('confidence')" id="el-confidence">
-          <div class="mock-element__label">Threat Confidence</div>
-          <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">Threat Confidence: 89.2%</div>
-          <div style="width: 100%; height: 6px; background: var(--border-glass); border-radius: 3px;">
-            <div style="width: 89%; height: 100%; background: var(--danger-color); border-radius: 3px;"></div>
+        <!-- Element 2: Risk Level -->
+        <div class="mock-element" onclick="selectElement('risklevel')" id="el-risklevel">
+          <div class="mock-element__label">Risk Level</div>
+          <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">Risk Level: HIGH (Orange)</div>
+          <div style="display: flex; gap: 4px; margin-top: 4px;">
+            <span style="padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(76, 175, 80, 0.2); color: #4CAF50;">LOW</span>
+            <span style="padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(255, 235, 59, 0.2); color: #FDD835;">MEDIUM</span>
+            <span style="padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(255, 152, 0, 0.3); color: #FF9800; border: 1px solid rgba(255, 152, 0, 0.5);">HIGH</span>
+            <span style="padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(244, 67, 54, 0.2); color: #F44336;">CRITICAL</span>
           </div>
         </div>
 
@@ -484,14 +487,19 @@
           </div>
         </div>
 
-        <!-- Confidence Explanation -->
-        <div class="explanation-content" id="exp-confidence">
-          <div class="explanation-title">📊 Threat Confidence</div>
-          <div class="explanation-metaphor">Metaphor: The Inspector's Certainty</div>
+        <!-- Risk Level Explanation -->
+        <div class="explanation-content" id="exp-risklevel">
+          <div class="explanation-title">📊 Risk Level</div>
+          <div class="explanation-metaphor">Metaphor: The Weather Warning System</div>
           <div class="explanation-body">
-            <p>The **Threat Confidence** represents how sure the AI model is of its classification verdict.</p>
-            <p>If the model classifies a function as vulnerable with **89.2% confidence**, it means the structural patterns inside the function align very strongly with known historical exploit shapes.</p>
-            <p>High confidence values require immediate engineering review, while low confidence scores (close to 50%) indicate potential border cases or minor anomalies.</p>
+            <p>The <strong>Risk Level</strong> is a color-coded severity tier based on the percentage of functions flagged as vulnerable:</p>
+            <ul>
+              <li><strong>GREEN (Low)</strong>: 0% — No vulnerabilities detected. All clear.</li>
+              <li><strong>YELLOW (Medium)</strong>: 1-25% — Some functions flagged. Review recommended.</li>
+              <li><strong>ORANGE (High)</strong>: 26-50% — Significant threat surface. Remediation needed before deployment.</li>
+              <li><strong>RED (Critical)</strong>: 51%+ — Majority of functions are vulnerable. Immediate intervention required.</li>
+            </ul>
+            <p><em>Analogy: Like a weather warning system — Green is clear skies, Yellow is watch advisory, Orange is a warning, and Red is a severe emergency alert.</em></p>
           </div>
         </div>
 
