@@ -332,6 +332,127 @@
       .lib-layout { grid-template-columns: 1fr; }
       .cards-sidebar { max-height: 350px; }
     }
+    
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .filter-chip {
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-glass);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      transition: all 0.25s ease;
+      user-select: none;
+    }
+    .filter-chip:hover {
+      border-color: var(--border-glow);
+      color: var(--text-primary);
+    }
+    .filter-chip.active {
+      background: var(--accent-gradient);
+      color: #fff;
+      border-color: transparent;
+    }
+    
+    /* Controls row: search + sort */
+    .controls-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      max-width: 620px;
+      margin: 0 auto 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .controls-row .search-container {
+      margin: 0;
+      flex: 1;
+      min-width: 240px;
+    }
+    .sort-select {
+      padding: 14px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: 100px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 500;
+      outline: none;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      min-width: 150px;
+    }
+    .sort-select:focus {
+      border-color: var(--accent-primary);
+    }
+    
+    /* Category badge on cards */
+    .cwe-card__category {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+    .cat--buffer { background: rgba(0, 113, 227, 0.12); color: #2997ff; }
+    .cat--memory { background: rgba(255, 159, 10, 0.12); color: #ff9f0a; }
+    .cat--numeric { background: rgba(191, 90, 242, 0.12); color: #bf5af2; }
+    .cat--injection { background: rgba(255, 59, 48, 0.12); color: #ff453a; }
+    .cat--concurrency { background: rgba(48, 209, 88, 0.12); color: #30d158; }
+    .cat--type-logic { background: rgba(255, 214, 10, 0.12); color: #ffd60a; }
+    
+    /* Results count */
+    .results-count {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    
+    /* Related CWEs section */
+    .viewer-panel__related {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-glass);
+    }
+    .viewer-panel__related-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+    .viewer-panel__related-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .related-cwe-pill {
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      color: var(--accent-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .related-cwe-pill:hover {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
   </style>
 </head>
 <body>
@@ -353,11 +474,33 @@
     </p>
   </header>
 
-  <!-- SEARCH CONTAINER -->
-  <div class="search-container reveal active">
-    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" id="libSearch" class="search-input" placeholder="Search CWEs (e.g. overflow, gets, command)..." onkeyup="filterCWEs()" />
+  <!-- CATEGORY FILTER BAR -->
+  <div class="filter-bar reveal active" id="filterBar">
+    <span class="filter-chip active" data-category="all" onclick="setCategory('all')">All</span>
+    <span class="filter-chip" data-category="buffer" onclick="setCategory('buffer')">Buffer Operations</span>
+    <span class="filter-chip" data-category="memory" onclick="setCategory('memory')">Memory Mgmt</span>
+    <span class="filter-chip" data-category="numeric" onclick="setCategory('numeric')">Numeric Errors</span>
+    <span class="filter-chip" data-category="injection" onclick="setCategory('injection')">Injection</span>
+    <span class="filter-chip" data-category="concurrency" onclick="setCategory('concurrency')">Concurrency</span>
+    <span class="filter-chip" data-category="type-logic" onclick="setCategory('type-logic')">Type &amp; Logic</span>
   </div>
+
+  <!-- CONTROLS ROW: SEARCH + SORT -->
+  <div class="controls-row reveal active">
+    <div class="search-container">
+      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="libSearch" class="search-input" placeholder="Search CWEs (e.g. overflow, gets, command)..." onkeyup="filterCWEs()" />
+    </div>
+    <select id="sortSelect" class="sort-select" onchange="filterCWEs()">
+      <option value="id-asc">CWE ID ↑</option>
+      <option value="id-desc">CWE ID ↓</option>
+      <option value="severity">Severity</option>
+      <option value="alpha">A–Z</option>
+    </select>
+  </div>
+
+  <!-- RESULTS COUNT -->
+  <div class="results-count reveal active" id="resultsCount"></div>
 
   <!-- WORKSPACE LAYOUT -->
   <section class="lib-layout reveal active">
@@ -375,6 +518,7 @@
         <div class="viewer-panel__meta">
           <span class="viewer-panel__meta-item">CWE ID: <strong id="viewCweId">—</strong></span>
           <span class="viewer-panel__meta-item">Severity: <span id="viewSeverity" class="severity-badge">—</span></span>
+          <span class="viewer-panel__meta-item">Category: <strong id="viewCategory">—</strong></span>
           <span class="viewer-panel__meta-item">CERT C: <strong id="viewCertRule">—</strong></span>
         </div>
       </div>
@@ -406,6 +550,12 @@
 
       </div>
 
+      <!-- Related CWEs -->
+      <div class="viewer-panel__related" id="viewRelated" style="display: none;">
+        <div class="viewer-panel__related-title">Related Vulnerabilities</div>
+        <div class="viewer-panel__related-list" id="viewRelatedList"></div>
+      </div>
+
     </div>
   </section>
 
@@ -429,13 +579,39 @@
 </div>
 
 <script>
-  // Local Database of CWE Definitions and Code Snippets
+  // ─── Category labels ───
+  const CATEGORY_LABELS = {
+    buffer: "Buffer Operations",
+    memory: "Memory Mgmt",
+    numeric: "Numeric Errors",
+    injection: "Injection",
+    concurrency: "Concurrency",
+    "type-logic": "Type & Logic"
+  };
+
+  // ─── Local Database of CWE Definitions and Code Snippets ───
   const CWE_DATABASE = [
+    // ── Buffer Operations ──
+    {
+      id: "CWE-119",
+      title: "Memory Buffer Operations",
+      severity: "critical",
+      category: "buffer",
+      certRule: "ARR30-C",
+      tags: ["bounds", "buffer", "memory"],
+      related: ["CWE-120", "CWE-121", "CWE-122", "CWE-125", "CWE-787"],
+      desc: "Parent category for all buffer boundary violations. Software performs operations on a memory buffer without ensuring reads and writes stay within allocated boundaries, enabling overflow, underflow, and out-of-bounds access.",
+      vulnCode: `void vulnerable_memop(char *src, size_t len) {\n    char dest[16];\n    // DANGER: No length check before copy\n    memcpy(dest, src, len);\n}`,
+      secureCode: `void secure_memop(char *src, size_t len) {\n    char dest[16];\n    // COMPLIANT: Bounds-check before copy\n    if (len <= sizeof(dest)) {\n        memcpy(dest, src, len);\n    }\n}`
+    },
     {
       id: "CWE-120",
       title: "Classic Buffer Overflow",
       severity: "critical",
+      category: "buffer",
       certRule: "STR31-C",
+      tags: ["overflow", "strcpy", "stack"],
+      related: ["CWE-119", "CWE-121", "CWE-122", "CWE-787"],
       desc: "Occurs when a program copies an input buffer to a destination buffer without checking bounds. The standard strcat() and strcpy() append bytes blindly, easily overflowing stack boundaries to hijack execution pointers.",
       vulnCode: `void vulnerable_copy(char *user_input) {\n    char dest_buffer[32];\n    // DANGER: No size checking. If user_input > 31 chars, stack overflows!\n    strcpy(dest_buffer, user_input);\n    printf("Copied: %s\\n", dest_buffer);\n}`,
       secureCode: `void secure_copy(char *user_input) {\n    char dest_buffer[32];\n    // COMPLIANT: Copy max bounds minus 1 for null terminator\n    strncpy(dest_buffer, user_input, sizeof(dest_buffer) - 1);\n    dest_buffer[sizeof(dest_buffer) - 1] = '\\0';\n    printf("Copied: %s\\n", dest_buffer);\n}`
@@ -444,71 +620,446 @@
       id: "CWE-121",
       title: "Stack-based Buffer Overflow",
       severity: "critical",
+      category: "buffer",
       certRule: "ARR30-C",
+      tags: ["overflow", "stack", "gets"],
+      related: ["CWE-119", "CWE-120", "CWE-122", "CWE-787"],
       desc: "Writing data past stack bounds corrupts local pointers, stack frames, and the saved return instruction pointer (EIP/RIP). Commonly triggered by gets() which has no built-in size limits.",
       vulnCode: `void vulnerable_input() {\n    char name_buffer[64];\n    printf("Enter name: ");\n    // DANGER: gets() copies unlimited characters until newline!\n    gets(name_buffer);\n    printf("Hello, %s\\n", name_buffer);\n}`,
       secureCode: `void secure_input() {\n    char name_buffer[64];\n    printf("Enter name: ");\n    // COMPLIANT: fgets() restricts reading to target size\n    if (fgets(name_buffer, sizeof(name_buffer), stdin) != NULL) {\n        printf("Hello, %s\\n", name_buffer);\n    }\n}`
     },
     {
+      id: "CWE-122",
+      title: "Heap-based Buffer Overflow",
+      severity: "critical",
+      category: "buffer",
+      certRule: "MEM35-C",
+      tags: ["overflow", "heap", "malloc"],
+      related: ["CWE-119", "CWE-120", "CWE-121", "CWE-415", "CWE-416"],
+      desc: "Writing beyond the bounds of a dynamically allocated heap buffer corrupts adjacent heap metadata or objects. Attackers exploit this to overwrite function pointers or vtable references for code execution.",
+      vulnCode: `void vulnerable_heap_copy(char *input, size_t len) {\n    char *buf = (char*)malloc(16);\n    // DANGER: No length check — writes past heap chunk\n    memcpy(buf, input, len);\n}`,
+      secureCode: `void secure_heap_copy(char *input, size_t len) {\n    char *buf = (char*)malloc(16);\n    if (!buf) return;\n    // COMPLIANT: Only copy what fits\n    if (len > 15) len = 15;\n    memcpy(buf, input, len);\n    buf[len] = '\\0';\n}`
+    },
+    {
+      id: "CWE-125",
+      title: "Out-of-bounds Read",
+      severity: "high",
+      category: "buffer",
+      certRule: "ARR30-C",
+      tags: ["overread", "bounds", "read"],
+      related: ["CWE-119", "CWE-126", "CWE-129", "CWE-787"],
+      desc: "Reading past the end of a buffer leaks adjacent memory contents. In a binary context this can spill cryptographic keys, heap pointers, or other sensitive data through exposed code paths.",
+      vulnCode: `int vulnerable_lookup(int *table, int index) {\n    // DANGER: No bounds check before read\n    return table[index];\n}`,
+      secureCode: `int secure_lookup(int *table, int size, int index) {\n    // COMPLIANT: Bounds-check before read\n    if (index >= 0 && index < size) {\n        return table[index];\n    }\n    return -1;\n}`
+    },
+    {
+      id: "CWE-126",
+      title: "Buffer Over-read",
+      severity: "high",
+      category: "buffer",
+      certRule: "ARR30-C",
+      tags: ["overread", "null-termination", "copy"],
+      related: ["CWE-119", "CWE-125", "CWE-129", "CWE-170"],
+      desc: "A function reads more bytes from a buffer than it contains, often because a missing null terminator causes string operations to read past the allocated boundary into arbitrary memory.",
+      vulnCode: `void vulnerable_overread() {\n    char buf[8] = {'S','A','F','E'};\n    // DANGER: No null terminator — strcpy reads past buf\n    char copy[16];\n    strcpy(copy, buf);\n}`,
+      secureCode: `void secure_overread() {\n    char buf[8] = {'S','A','F','E','\\0'};\n    // COMPLIANT: Explicit null terminator + bounded copy\n    char copy[16];\n    strncpy(copy, buf, sizeof(copy) - 1);\n    copy[sizeof(copy) - 1] = '\\0';\n}`
+    },
+    {
+      id: "CWE-129",
+      title: "Improper Array Index Validation",
+      severity: "medium",
+      category: "buffer",
+      certRule: "ARR30-C",
+      tags: ["index", "bounds", "array"],
+      related: ["CWE-119", "CWE-125", "CWE-131", "CWE-787"],
+      desc: "Using an untrusted integer as an array index without validating it is within the array bounds. A negative or oversized index can read or write arbitrary memory.",
+      vulnCode: `void vulnerable_set(int *arr, int index, int val) {\n    // DANGER: Index may be negative or >= allocated size\n    arr[index] = val;\n}`,
+      secureCode: `void secure_set(int *arr, size_t size, int index, int val) {\n    // COMPLIANT: Validate index against known bounds\n    if (index >= 0 && (size_t)index < size) {\n        arr[index] = val;\n    }\n}`
+    },
+    {
+      id: "CWE-131",
+      title: "Incorrect Buffer Size Calculation",
+      severity: "high",
+      category: "buffer",
+      certRule: "MEM35-C",
+      tags: ["allocation", "sizeof", "overflow"],
+      related: ["CWE-119", "CWE-122", "CWE-190", "CWE-680"],
+      desc: "Allocating a buffer using sizeof on a pointer instead of the pointed-to type, or miscalculating element counts, results in undersized buffers vulnerable to overflow.",
+      vulnCode: `void vulnerable_wrong_size() {\n    int *arr = (int*)malloc(sizeof(arr));\n    // DANGER: sizeof(arr) == sizeof(int*), not 40*sizeof(int)\n    for (int i = 0; i < 40; i++) arr[i] = i;\n}`,
+      secureCode: `void secure_correct_size() {\n    int *arr = (int*)malloc(40 * sizeof(int));\n    // COMPLIANT: sizeof(*arr) gives element size, multiply by count\n    if (arr) {\n        for (int i = 0; i < 40; i++) arr[i] = i;\n    }\n}`
+    },
+    {
+      id: "CWE-170",
+      title: "Improper Null Termination",
+      severity: "medium",
+      category: "buffer",
+      certRule: "STR03-C",
+      tags: ["null", "termination", "string"],
+      related: ["CWE-119", "CWE-120", "CWE-126", "CWE-787"],
+      desc: "Failing to null-terminate a character buffer after a bounded copy leaves trailing junk in memory. Subsequent string operations read past the intended boundary, leaking data or crashing.",
+      vulnCode: `void vulnerable_bad_termination(char *src) {\n    char dest[16];\n    strncpy(dest, src, sizeof(dest));\n    // DANGER: No null terminator if src >= 16 bytes\n    printf("%s\\n", dest);\n}`,
+      secureCode: `void secure_good_termination(char *src) {\n    char dest[16];\n    strncpy(dest, src, sizeof(dest) - 1);\n    // COMPLIANT: Always null-terminate after bounded copy\n    dest[sizeof(dest) - 1] = '\\0';\n    printf("%s\\n", dest);\n}`
+    },
+    {
       id: "CWE-787",
       title: "Out-of-bounds Write",
       severity: "critical",
+      category: "buffer",
       certRule: "ARR30-C",
+      tags: ["oob", "write", "index"],
+      related: ["CWE-119", "CWE-120", "CWE-121", "CWE-122", "CWE-125"],
       desc: "The software writes past the end or before the beginning of the allocated buffer due to incorrect array indexing or pointer arithmetic. This causes heap corruption or instant segmentation faults.",
       vulnCode: `void vulnerable_write(int index, int value) {\n    int data_array[10];\n    // DANGER: No check on index bounds before writing!\n    data_array[index] = value;\n}`,
       secureCode: `void secure_write(int index, int value) {\n    int data_array[10];\n    // COMPLIANT: Explicit bounds check before array access\n    if (index >= 0 && index < 10) {\n        data_array[index] = value;\n    } else {\n        fprintf(stderr, "Index out of bounds!\\n");\n    }\n}`
     },
+
+    // ── Memory Management ──
     {
-      id: "CWE-134",
-      title: "Format String Vulnerability",
+      id: "CWE-401",
+      title: "Memory Leak",
+      severity: "medium",
+      category: "memory",
+      certRule: "MEM31-C",
+      tags: ["leak", "free", "allocation"],
+      related: ["CWE-415", "CWE-416", "CWE-770"],
+      desc: "Dynamically allocated memory is never freed after use, gradually exhausting the available heap. Over time this leads to denial-of-service as allocation requests begin to fail.",
+      vulnCode: `void vulnerable_leak() {\n    char *buf = (char*)malloc(1024);\n    // DANGER: Function returns without freeing buf\n    if (!process(buf)) return;\n    free(buf);\n}`,
+      secureCode: `void secure_noleak() {\n    char *buf = (char*)malloc(1024);\n    if (!buf) return;\n    if (!process(buf)) {\n        free(buf);\n        return;\n    }\n    free(buf);\n}`
+    },
+    {
+      id: "CWE-415",
+      title: "Double Free",
       severity: "high",
-      certRule: "FIO30-C",
-      desc: "Passing unvalidated user input directly into formatting functions (printf, sprintf, syslog) allows attackers to use format specifiers (%x, %s, %n) to dump memory or overwrite pointer return values.",
-      vulnCode: `void vulnerable_print(char *user_input) {\n    // DANGER: Direct printing of user-controlled string!\n    printf(user_input);\n}`,
-      secureCode: `void secure_print(char *user_input) {\n    // COMPLIANT: Enforce explicit string format specifiers\n    printf("%s", user_input);\n}`
+      category: "memory",
+      certRule: "MEM31-C",
+      tags: ["free", "heap", "corruption"],
+      related: ["CWE-416", "CWE-122", "CWE-401"],
+      desc: "Calling free() more than once on the same pointer corrupts the heap allocator's free-list metadata. Attackers can trigger arbitrary write primitives by manipulating the allocator state.",
+      vulnCode: `void vulnerable_double_free() {\n    char *ptr = (char*)malloc(32);\n    free(ptr);\n    // DANGER: Second free on already-freed pointer\n    if (should_cleanup) free(ptr);\n}`,
+      secureCode: `void secure_no_double_free() {\n    char *ptr = (char*)malloc(32);\n    free(ptr);\n    ptr = NULL;\n    // COMPLIANT: NULL-check prevents double free\n    if (should_cleanup && ptr) free(ptr);\n}`
     },
     {
       id: "CWE-416",
       title: "Use After Free",
       severity: "high",
+      category: "memory",
       certRule: "MEM30-C",
+      tags: ["uaf", "free", "dangling"],
+      related: ["CWE-415", "CWE-122", "CWE-401", "CWE-476"],
       desc: "Accessing dynamic heap memory after it has been freed can result in undefined behavior, crashes, or arbitrary code execution if an attacker manages to reallocate the memory chunk to a malicious payload.",
       vulnCode: `void vulnerable_uaf() {\n    char *ptr = (char*)malloc(32);\n    free(ptr);\n    // ... intermediate operations\n    // DANGER: Pointer reused/written to after free!\n    strcpy(ptr, "bad_data");\n}`,
       secureCode: `void secure_uaf() {\n    char *ptr = (char*)malloc(32);\n    free(ptr);\n    // COMPLIANT: Nullify pointer immediately after free\n    ptr = NULL;\n}`
     },
     {
-      id: "CWE-190",
-      title: "Integer Overflow",
-      severity: "high",
-      certRule: "INT30-C",
-      desc: "Arithmetic results exceed maximum bounds and wrap around. In dynamic memory allocation (malloc), multiplying sizes without validation can wrap to a small integer, leading to heap buffer corruption.",
-      vulnCode: `void* vulnerable_alloc(size_t element_size, size_t count) {\n    // DANGER: Overflow not checked. If wrap occurs, malloc(small) succeeds\n    // but caller writes full (element_size * count) data!\n    return malloc(element_size * count);\n}`,
-      secureCode: `void* secure_alloc(size_t element_size, size_t count) {\n    // COMPLIANT: Check for potential integer overflow before malloc\n    if (count != 0 && element_size > SIZE_MAX / count) {\n        return NULL; // Overflow detected\n    }\n    return malloc(element_size * count);\n}`
+      id: "CWE-457",
+      title: "Uninitialized Variable",
+      severity: "medium",
+      category: "memory",
+      certRule: "EXP33-C",
+      tags: ["uninitialized", "undefined", "memory"],
+      related: ["CWE-476", "CWE-758", "CWE-188"],
+      desc: "Using a local variable or heap chunk before assigning a value reads stale stack or heap contents. In binaries this can leak secrets, branch unexpectedly, or crash on invalid pointer dereference.",
+      vulnCode: `void vulnerable_uninit() {\n    int *ptr;\n    // DANGER: ptr has indeterminate stack value\n    *ptr = 42;\n}`,
+      secureCode: `void secure_init() {\n    int *ptr = NULL;\n    // COMPLIANT: Always initialize before use\n    ptr = (int*)malloc(sizeof(int));\n    if (ptr) *ptr = 42;\n}`
     },
     {
       id: "CWE-476",
       title: "NULL Pointer Dereference",
       severity: "medium",
+      category: "memory",
       certRule: "EXP34-C",
+      tags: ["null", "dereference", "crash"],
+      related: ["CWE-457", "CWE-252", "CWE-754"],
       desc: "Dereferencing a pointer that resolves to NULL. Often occurs when memory allocations fail or API operations return NULL, leading to segmentation faults and denial of service.",
       vulnCode: `void vulnerable_deref() {\n    int *ptr = (int*)malloc(sizeof(int));\n    // DANGER: Writing directly to allocated address without NULL check!\n    *ptr = 42;\n}`,
       secureCode: `void secure_deref() {\n    int *ptr = (int*)malloc(sizeof(int));\n    // COMPLIANT: Verify pointer validity before writing\n    if (ptr != NULL) {\n        *ptr = 42;\n    } else {\n        // Handle memory failure\n    }\n}`
     },
     {
+      id: "CWE-770",
+      title: "Allocation Without Limits",
+      severity: "medium",
+      category: "memory",
+      certRule: "MEM35-C",
+      tags: ["allocation", "dos", "unbounded"],
+      related: ["CWE-789", "CWE-401", "CWE-190"],
+      desc: "Allocating memory based on untrusted input without an upper cap allows an attacker to exhaust the system heap, triggering out-of-memory conditions and denial of service.",
+      vulnCode: `void* vulnerable_unbounded(size_t user_len) {\n    // DANGER: No upper bound on allocation size\n    return malloc(user_len);\n}`,
+      secureCode: `void* secure_bounded(size_t user_len) {\n    // COMPLIANT: Enforce a sane maximum allocation size\n    const size_t MAX_ALLOC = 1024 * 1024;\n    if (user_len > MAX_ALLOC) return NULL;\n    return malloc(user_len);\n}`
+    },
+    {
+      id: "CWE-789",
+      title: "Memory Allocation with Excessive Size",
+      severity: "high",
+      category: "memory",
+      certRule: "MEM35-C",
+      tags: ["allocation", "overflow", "size"],
+      related: ["CWE-770", "CWE-190", "CWE-680"],
+      desc: "A computed allocation size is extremely large (often due to integer overflow in the size calculation), resulting in a small buffer that the caller assumes is much bigger, enabling heap overflows.",
+      vulnCode: `void* vulnerable_excessive(size_t n) {\n    // DANGER: If n is huge, n * sizeof(int) wraps silently\n    return malloc(n * sizeof(int));\n}`,
+      secureCode: `void* secure_excessive(size_t n) {\n    // COMPLIANT: Validate multiplication won't overflow\n    if (n > SIZE_MAX / sizeof(int)) return NULL;\n    return malloc(n * sizeof(int));\n}`
+    },
+
+    // ── Numeric Errors ──
+    {
+      id: "CWE-190",
+      title: "Integer Overflow",
+      severity: "high",
+      category: "numeric",
+      certRule: "INT30-C",
+      tags: ["overflow", "wraparound", "arithmetic"],
+      related: ["CWE-191", "CWE-680", "CWE-195", "CWE-196", "CWE-789"],
+      desc: "Arithmetic results exceed maximum bounds and wrap around. In dynamic memory allocation (malloc), multiplying sizes without validation can wrap to a small integer, leading to heap buffer corruption.",
+      vulnCode: `void* vulnerable_alloc(size_t element_size, size_t count) {\n    // DANGER: Overflow not checked. If wrap occurs, malloc(small) succeeds\n    // but caller writes full (element_size * count) data!\n    return malloc(element_size * count);\n}`,
+      secureCode: `void* secure_alloc(size_t element_size, size_t count) {\n    // COMPLIANT: Check for potential integer overflow before malloc\n    if (count != 0 && element_size > SIZE_MAX / count) {\n        return NULL; // Overflow detected\n    }\n    return malloc(element_size * count);\n}`
+    },
+    {
+      id: "CWE-191",
+      title: "Integer Underflow",
+      severity: "high",
+      category: "numeric",
+      certRule: "INT30-C",
+      tags: ["underflow", "wraparound", "arithmetic"],
+      related: ["CWE-190", "CWE-680", "CWE-195", "CWE-196"],
+      desc: "Subtracting from an unsigned integer that is already zero wraps to the maximum value. This can cause size calculations to produce extremely large values, leading to buffer overflows in subsequent operations.",
+      vulnCode: `size_t vulnerable_sub(size_t current, size_t remove) {\n    // DANGER: If current < remove, result wraps to huge value\n    return current - remove;\n}`,
+      secureCode: `size_t secure_sub(size_t current, size_t remove) {\n    // COMPLIANT: Only subtract when current >= remove\n    if (current < remove) return 0;\n    return current - remove;\n}`
+    },
+    {
+      id: "CWE-195",
+      title: "Signed to Unsigned Conversion Error",
+      severity: "high",
+      category: "numeric",
+      certRule: "INT31-C",
+      tags: ["conversion", "signed", "unsigned", "negative"],
+      related: ["CWE-190", "CWE-196", "CWE-129", "CWE-680"],
+      desc: "A negative signed integer is implicitly converted to a large unsigned value. When used as an allocation size or array index, the huge unsigned value bypasses bounds checks or causes undersized allocation.",
+      vulnCode: `void* vulnerable_signed_alloc(int signed_size) {\n    // DANGER: Negative becomes huge unsigned, malloc succeeds small!\n    return malloc(signed_size);\n}`,
+      secureCode: `void* secure_signed_alloc(int signed_size) {\n    // COMPLIANT: Validate signed value before using as size\n    if (signed_size <= 0 || signed_size > 1024 * 1024) return NULL;\n    return malloc((size_t)signed_size);\n}`
+    },
+    {
+      id: "CWE-196",
+      title: "Unsigned to Signed Conversion Error",
+      severity: "medium",
+      category: "numeric",
+      certRule: "INT31-C",
+      tags: ["conversion", "unsigned", "signed", "truncation"],
+      related: ["CWE-190", "CWE-195", "CWE-129"],
+      desc: "A large unsigned value is converted to a signed type that cannot represent it, producing a negative number. When used as an index or loop bound this can skip iterations or access invalid memory.",
+      vulnCode: `int vulnerable_truncate(unsigned int big) {\n    // DANGER: Values > INT_MAX become negative\n    int truncated = (int)big;\n    return truncated;\n}`,
+      secureCode: `int secure_notruncate(unsigned int big) {\n    // COMPLIANT: Range-check before narrowing cast\n    if (big > INT_MAX) return -1;\n    return (int)big;\n}`
+    },
+    {
+      id: "CWE-680",
+      title: "Integer Overflow to Buffer Overflow",
+      severity: "critical",
+      category: "numeric",
+      certRule: "INT30-C",
+      tags: ["overflow", "malloc", "wraparound"],
+      related: ["CWE-190", "CWE-191", "CWE-122", "CWE-131", "CWE-789"],
+      desc: "An integer overflow in a size calculation produces a smaller allocation than expected. The caller writes the intended (larger) amount of data, overflowing the undersized buffer on the heap.",
+      vulnCode: `void* vulnerable_overflow_to_overflow(size_t n) {\n    // DANGER: n * sizeof(int) wraps, allocating too little\n    int *p = (int*)malloc(n * sizeof(int));\n    for (size_t i = 0; i < n; i++) p[i] = 0; // overflow!\n    return p;\n}`,
+      secureCode: `void* secure_overflow_safe(size_t n) {\n    // COMPLIANT: Guard against wrap before allocation\n    if (n > SIZE_MAX / sizeof(int)) return NULL;\n    int *p = (int*)malloc(n * sizeof(int));\n    if (p) for (size_t i = 0; i < n; i++) p[i] = 0;\n    return p;\n}`
+    },
+
+    // ── Injection ──
+    {
+      id: "CWE-22",
+      title: "Path Traversal",
+      severity: "high",
+      category: "injection",
+      certRule: "FIO02-C",
+      tags: ["path", "directory", "file"],
+      related: ["CWE-77", "CWE-78", "CWE-367"],
+      desc: "User-controlled file paths containing '../' sequences escape the intended directory. Attackers can read or write arbitrary files by navigating outside the sandboxed root.",
+      vulnCode: `void vulnerable_open(char *filename) {\n    char path[256];\n    sprintf(path, "/var/data/%s", filename);\n    // DANGER: filename may contain ../../etc/passwd\n    FILE *f = fopen(path, "r");\n}`,
+      secureCode: `void secure_open(char *filename) {\n    // COMPLIANT: Reject path separators\n    if (strchr(filename, '/') || strstr(filename, "..")) {\n        fprintf(stderr, "Invalid path\\n");\n        return;\n    }\n    char path[256];\n    snprintf(path, sizeof(path), "/var/data/%s", filename);\n    FILE *f = fopen(path, "r");\n}`
+    },
+    {
+      id: "CWE-77",
+      title: "Command Injection",
+      severity: "critical",
+      category: "injection",
+      certRule: "ENV33-C",
+      tags: ["command", "shell", "exec"],
+      related: ["CWE-22", "CWE-78", "CWE-367"],
+      desc: "Passing unsanitized user input to shell-execution functions like popen(). Shell metacharacters allow arbitrary command execution with the binary's process privileges.",
+      vulnCode: `void vulnerable_popen(char *user_input) {\n    char cmd[256];\n    snprintf(cmd, sizeof(cmd), "grep %s /var/log", user_input);\n    // DANGER: popen() invokes shell interpreter\n    FILE *f = popen(cmd, "r");\n}`,
+      secureCode: `void secure_popen(char *user_input) {\n    // COMPLIANT: Use execve with discrete argv — no shell\n    char *const args[] = {"/bin/grep", user_input, "/var/log", NULL};\n    if (fork() == 0) execve(args[0], args, NULL);\n}`
+    },
+    {
       id: "CWE-78",
       title: "OS Command Injection",
       severity: "critical",
+      category: "injection",
       certRule: "ENV33-C",
+      tags: ["command", "system", "shell"],
+      related: ["CWE-77", "CWE-22", "CWE-134"],
       desc: "Passing unvalidated inputs directly to shell executors like system(). Delimiters can be injected to run commands with the privileges of the active binary process.",
       vulnCode: `void vulnerable_command(char *user_input) {\n    char command[128];\n    sprintf(command, "ping -c 3 %s", user_input);\n    // DANGER: system() spawns shell, executing injected delimiters!\n    system(command);\n}`,
       secureCode: `void secure_command(char *user_input) {\n    // COMPLIANT: Pass parameters as discrete arrays via execve\n    char *args[] = {"/bin/ping", "-c", "3", user_input, NULL};\n    if (fork() == 0) {\n        execve(args[0], args, NULL);\n    }\n}`
+    },
+    {
+      id: "CWE-134",
+      title: "Format String Vulnerability",
+      severity: "high",
+      category: "injection",
+      certRule: "FIO30-C",
+      tags: ["format", "printf", "specifier"],
+      related: ["CWE-78", "CWE-476", "CWE-20"],
+      desc: "Passing unvalidated user input directly into formatting functions (printf, sprintf, syslog) allows attackers to use format specifiers (%x, %s, %n) to dump memory or overwrite pointer return values.",
+      vulnCode: `void vulnerable_print(char *user_input) {\n    // DANGER: Direct printing of user-controlled string!\n    printf(user_input);\n}`,
+      secureCode: `void secure_print(char *user_input) {\n    // COMPLIANT: Enforce explicit string format specifiers\n    printf("%s", user_input);\n}`
+    },
+
+    // ── Concurrency ──
+    {
+      id: "CWE-362",
+      title: "Race Condition",
+      severity: "high",
+      category: "concurrency",
+      certRule: "POS48-C",
+      tags: ["race", "thread", "concurrent"],
+      related: ["CWE-367", "CWE-20", "CWE-754"],
+      desc: "Concurrent access to shared state without proper synchronization leads to interleaved execution where the outcome depends on scheduling. This can corrupt data structures or bypass security checks.",
+      vulnCode: `int shared_counter = 0;\nvoid vulnerable_thread() {\n    // DANGER: Non-atomic increment interleaves between threads\n    shared_counter++;\n}`,
+      secureCode: `int shared_counter = 0;\npthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;\nvoid secure_thread() {\n    // COMPLIANT: Mutex-guard the critical section\n    pthread_mutex_lock(&lock);\n    shared_counter++;\n    pthread_mutex_unlock(&lock);\n}`
+    },
+    {
+      id: "CWE-367",
+      title: "TOCTOU (Time-of-check Time-of-use)",
+      severity: "high",
+      category: "concurrency",
+      certRule: "POS35-C",
+      tags: ["toctou", "race", "file"],
+      related: ["CWE-362", "CWE-22", "CWE-59"],
+      desc: "A resource is checked for a property (e.g., file existence, permissions) and then used, but the resource state changes between check and use. The window is exploited to substitute a malicious resource.",
+      vulnCode: `void vulnerable_toctou(char *path) {\n    // DANGER: File can be replaced between access() and fopen()\n    if (access(path, R_OK) == 0) {\n        FILE *f = fopen(path, "r");\n    }\n}`,
+      secureCode: `void secure_toctou(char *path) {\n    // COMPLIANT: Open then fstat — single atomic operation\n    FILE *f = fopen(path, "r");\n    if (f) {\n        struct stat st;\n        if (fstat(fileno(f), &st) == 0) {\n            // process safely\n        }\n    }\n}`
+    },
+
+    // ── Type & Logic Errors ──
+    {
+      id: "CWE-188",
+      title: "Reliance on Data/Memory Layout",
+      severity: "medium",
+      category: "type-logic",
+      certRule: "EXP36-C",
+      tags: ["layout", "padding", "struct", "offset"],
+      related: ["CWE-468", "CWE-843", "CWE-758"],
+      desc: "Making assumptions about struct padding, field ordering, or alignment that differ from the compiler's actual layout. This breaks under different architectures or compiler flags, causing memory corruption.",
+      vulnCode: `struct Header { uint16_t len; uint32_t flags; };\nvoid vulnerable_layout(char *buf) {\n    // DANGER: Assumes no padding between len and flags\n    struct Header *h = (struct Header*)buf;\n    h->flags = 1;\n}`,
+      secureCode: `struct __attribute__((packed)) Header {\n    uint16_t len;\n    uint32_t flags;\n};\nvoid secure_layout(char *buf) {\n    // COMPLIANT: Use packed attribute or memcpy for serialization\n    struct Header h;\n    memcpy(&h, buf, sizeof(h));\n    h.flags = 1;\n    memcpy(buf, &h, sizeof(h));\n}`
+    },
+    {
+      id: "CWE-242",
+      title: "Use of Inherently Dangerous Function",
+      severity: "medium",
+      category: "type-logic",
+      certRule: "MSC24-C",
+      tags: ["dangerous", "gets", "deprecated"],
+      related: ["CWE-120", "CWE-121", "CWE-676", "CWE-134"],
+      desc: "Calling a library function that has no safe alternative for the operation — most notably gets(), which cannot be used securely because its input size is unbounded.",
+      vulnCode: `void vulnerable_gets() {\n    char buf[32];\n    printf("Enter data: ");\n    // DANGER: gets() has no size limit — always overflows\n    gets(buf);\n}`,
+      secureCode: `void secure_fgets() {\n    char buf[32];\n    printf("Enter data: ");\n    // COMPLIANT: fgets() caps the read to the buffer size\n    if (fgets(buf, sizeof(buf), stdin)) {\n        buf[strcspn(buf, "\\n")] = '\\0';\n    }\n}`
+    },
+    {
+      id: "CWE-252",
+      title: "Unchecked Return Value",
+      severity: "medium",
+      category: "type-logic",
+      certRule: "ERR33-C",
+      tags: ["return-value", "check", "error"],
+      related: ["CWE-476", "CWE-754", "CWE-690"],
+      desc: "Failing to check the return value of a function that can indicate failure (malloc, fopen, read). The program proceeds with an invalid state, typically leading to NULL dereference or data corruption.",
+      vulnCode: `void vulnerable_nocheck() {\n    FILE *f = fopen("config.txt", "r");\n    // DANGER: fopen can fail; f is NULL on error\n    char line[256];\n    fgets(line, sizeof(line), f);\n}`,
+      secureCode: `void secure_check() {\n    FILE *f = fopen("config.txt", "r");\n    // COMPLIANT: Always verify success before use\n    if (!f) {\n        fprintf(stderr, "Failed to open config\\n");\n        return;\n    }\n    char line[256];\n    if (fgets(line, sizeof(line), f)) {\n        // process\n    }\n    fclose(f);\n}`
+    },
+    {
+      id: "CWE-468",
+      title: "Incorrect Pointer Scaling",
+      severity: "high",
+      category: "type-logic",
+      certRule: "ARR39-C",
+      tags: ["pointer", "arithmetic", "scale"],
+      related: ["CWE-119", "CWE-188", "CWE-787", "CWE-843"],
+      desc: "Adding a byte offset to a typed pointer instead of an element offset. Because pointer arithmetic scales by the pointed-to type size, treating bytes as elements yields out-of-bounds access.",
+      vulnCode: `void vulnerable_scale(int *arr, size_t byte_offset) {\n    // DANGER: byte_offset is multiplied by sizeof(int) implicitly\n    arr[byte_offset] = 0;\n}`,
+      secureCode: `void secure_scale(int *arr, size_t elem_count, size_t byte_offset) {\n    // COMPLIANT: Convert byte offset to element offset\n    size_t elem_offset = byte_offset / sizeof(int);\n    if (elem_offset < elem_count) {\n        arr[elem_offset] = 0;\n    }\n}`
+    },
+    {
+      id: "CWE-676",
+      title: "Use of Potentially Dangerous Function",
+      severity: "medium",
+      category: "type-logic",
+      certRule: "MSC24-C",
+      tags: ["dangerous", "strcpy", "sprintf"],
+      related: ["CWE-242", "CWE-120", "CWE-121", "CWE-134"],
+      desc: "Using standard C library functions (strcpy, strcat, sprintf) that offer no buffer size parameter. These functions blindly write output, making any mistake in size calculation a guaranteed overflow.",
+      vulnCode: `void vulnerable_dangerous(char *src) {\n    char dst[32];\n    char suffix[32];\n    // DANGER: strcat blindly appends, no length check\n    strcpy(dst, src);\n    strcat(dst, ".cfg");\n}`,
+      secureCode: `void secure_safe(char *src) {\n    char dst[32];\n    // COMPLIANT: snprintf provides bounded concatenation\n    snprintf(dst, sizeof(dst), "%s.cfg", src);\n}`
+    },
+    {
+      id: "CWE-754",
+      title: "Improper Check for Unusual Conditions",
+      severity: "medium",
+      category: "type-logic",
+      certRule: "ERR33-C",
+      tags: ["error", "check", "exceptional"],
+      related: ["CWE-252", "CWE-476", "CWE-362", "CWE-20"],
+      desc: "The software does not check for or improperly handles exceptional conditions (I/O errors, signal interrupts, unexpected input). The program continues in a corrupt state, often leading to crashes or silent data loss.",
+      vulnCode: `void vulnerable_noerr() {\n    FILE *f = fopen("data.bin", "rb");\n    size_t n;\n    // DANGER: fread can return fewer bytes than requested\n    fread(&n, sizeof(n), 1, f);\n    char *buf = (char*)malloc(n);\n}`,
+      secureCode: `void secure_handleerr() {\n    FILE *f = fopen("data.bin", "rb");\n    if (!f) return;\n    size_t n;\n    if (fread(&n, sizeof(n), 1, f) != 1 || n > 65536) {\n        fclose(f);\n        return;\n    }\n    char *buf = (char*)malloc(n);\n    fclose(f);\n}`
+    },
+    {
+      id: "CWE-758",
+      title: "Reliance on Undefined or Unspecified Behavior",
+      severity: "high",
+      category: "type-logic",
+      certRule: "MSC15-C",
+      tags: ["undefined", "compiler", "optimization"],
+      related: ["CWE-457", "CWE-188", "CWE-468", "CWE-843"],
+      desc: "Code that depends on behavior the C standard leaves undefined (signed overflow, strict aliasing violations, unsequenced modifications). Compilers optimize these assuming they never occur, producing broken machine code.",
+      vulnCode: `void vulnerable_undefined(int x) {\n    // DANGER: Signed overflow is undefined — compiler assumes it never happens\n    if (x + 100 < x) {\n        printf("Overflow\\n");\n    }\n}`,
+      secureCode: `void secure_defined(int x) {\n    // COMPLIANT: Use unsigned for defined wraparound, or check before\n    if (x > INT_MAX - 100) {\n        printf("Overflow\\n");\n    }\n}`
+    },
+    {
+      id: "CWE-843",
+      title: "Type Confusion",
+      severity: "high",
+      category: "type-logic",
+      certRule: "EXP39-C",
+      tags: ["type", "cast", "vtable", "confusion"],
+      related: ["CWE-188", "CWE-468", "CWE-704", "CWE-758"],
+      desc: "Accessing an object using a type incompatible with its actual type through an improper cast or corrupted vtable pointer. In C++ this can hijack virtual dispatch to execute attacker-chosen methods.",
+      vulnCode: `struct Base { void (*func)(); };\nstruct Derived { void (*func)(); int extra; };\nvoid vulnerable_cast(struct Base *b) {\n    // DANGER: Forced cast bypasses type safety\n    struct Derived *d = (struct Derived*)b;\n    d->extra = 42;\n}`,
+      secureCode: `union SafeType {\n    struct Base b;\n    struct Derived d;\n};\nvoid secure_union() {\n    union SafeType u;\n    u.b.func = NULL;\n    // COMPLIANT: Tagged union or dynamic_cast preserves type safety\n}`
     }
   ];
 
-  // Render Sidebar Cards
+  // ── State ──
+  let activeCategory = "all";
+
+  // ── Category helpers ──
+  function getCategoryLabel(cat) {
+    return CATEGORY_LABELS[cat] || cat;
+  }
+
+  function setCategory(cat) {
+    activeCategory = cat;
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.classList.toggle('active', chip.dataset.category === cat);
+    });
+    filterCWEs();
+  }
+
+  // ── Render Sidebar Cards ──
   function renderCards(data) {
     const container = document.getElementById('cardsSidebar');
     container.innerHTML = '';
+    
+    // Update count
+    document.getElementById('resultsCount').textContent =
+      `Showing ${data.length} of ${CWE_DATABASE.length} vulnerabilities`;
     
     if (data.length === 0) {
       container.innerHTML = '<div style="color:#86868b; text-align:center; padding: 20px;">No results found.</div>';
@@ -528,12 +1079,13 @@
         </div>
         <div class="cwe-card__title">${item.title}</div>
         <div class="cwe-card__desc">${item.desc}</div>
+        <span class="cwe-card__category cat--${item.category}">${getCategoryLabel(item.category)}</span>
       `;
       container.appendChild(card);
     });
   }
 
-  // Load CWE details
+  // ── Load CWE details ──
   function selectCWE(id) {
     const item = CWE_DATABASE.find(c => c.id === id);
     if (!item) return;
@@ -541,15 +1093,17 @@
     // Highlight card
     const cards = document.querySelectorAll('.cwe-card');
     cards.forEach(c => c.classList.remove('selected'));
-    document.getElementById('card-' + id).classList.add('selected');
+    const targetCard = document.getElementById('card-' + id);
+    if (targetCard) targetCard.classList.add('selected');
     
     // Populate panel
     document.getElementById('viewTitle').textContent = item.title;
     document.getElementById('viewCweId').textContent = item.id;
+    document.getElementById('viewCategory').textContent = getCategoryLabel(item.category);
     document.getElementById('viewCertRule').textContent = item.certRule;
     document.getElementById('viewDesc').textContent = item.desc;
     
-    // Set badges
+    // Set severity badge
     const badge = document.getElementById('viewSeverity');
     badge.className = 'severity-badge severity--' + item.severity;
     badge.textContent = item.severity;
@@ -560,16 +1114,52 @@
     
     // Reveal editors
     document.getElementById('editorsContainer').style.display = 'grid';
+    
+    // Render related CWEs
+    const relatedContainer = document.getElementById('viewRelated');
+    const relatedList = document.getElementById('viewRelatedList');
+    if (item.related && item.related.length > 0) {
+      relatedList.innerHTML = item.related.map(rid => {
+        const r = CWE_DATABASE.find(c => c.id === rid);
+        if (!r) return '';
+        return `<span class="related-cwe-pill" onclick="selectCWE('${r.id}')">${r.id}: ${r.title}</span>`;
+      }).join('');
+      relatedContainer.style.display = 'block';
+    } else {
+      relatedContainer.style.display = 'none';
+    }
   }
 
-  // Search filter
+  // ── Search + Category + Sort filter ──
   function filterCWEs() {
     const query = document.getElementById('libSearch').value.toLowerCase();
-    const filtered = CWE_DATABASE.filter(item => 
-      item.id.toLowerCase().includes(query) ||
-      item.title.toLowerCase().includes(query) ||
-      item.desc.toLowerCase().includes(query)
-    );
+    const sortVal = document.getElementById('sortSelect').value;
+    
+    let filtered = CWE_DATABASE.filter(item => {
+      // Text search
+      const matchesSearch = query === '' ||
+        item.id.toLowerCase().includes(query) ||
+        item.title.toLowerCase().includes(query) ||
+        item.desc.toLowerCase().includes(query) ||
+        item.certRule.toLowerCase().includes(query) ||
+        (item.tags && item.tags.some(t => t.includes(query)));
+      // Category filter
+      const matchesCategory = activeCategory === 'all' || item.category === activeCategory;
+      return matchesSearch && matchesCategory;
+    });
+    
+    // Sort
+    const severityOrder = { critical: 0, high: 1, medium: 2 };
+    filtered.sort((a, b) => {
+      switch (sortVal) {
+        case 'id-asc': return a.id.localeCompare(b.id);
+        case 'id-desc': return b.id.localeCompare(a.id);
+        case 'severity': return severityOrder[a.severity] - severityOrder[b.severity] || a.id.localeCompare(b.id);
+        case 'alpha': return a.title.localeCompare(b.title);
+        default: return 0;
+      }
+    });
+    
     renderCards(filtered);
   }
 
@@ -588,7 +1178,7 @@
     });
   }
 
-  // Init page
+  // ── Init page ──
   document.addEventListener('DOMContentLoaded', () => {
     renderCards(CWE_DATABASE);
     if (CWE_DATABASE.length > 0) {

@@ -359,15 +359,47 @@
   <!-- HEADER -->
   <header class="guide-header reveal active">
     <div class="guide-header__badge">Beginner-Friendly Walkthrough</div>
-    <h1 class="guide-title">How Sentinel Scans Code</h1>
+    <h1 class="guide-title">Understanding Your Security Report</h1>
     <p class="guide-subtitle">
-      No security background? No problem. Read this simple guide to understand the metaphors and metrics behind our software security report.
+      Never heard of a "vulnerability" or "binary analysis"? That's fine. This guide assumes zero prior knowledge and walks you through what Sentinel does and how to read every part of your report.
     </p>
   </header>
 
+  <!-- START HERE: PLAIN-LANGUAGE INTRO -->
+  <section class="analogy-section reveal active">
+    <h2 class="section-headline">Start Here: The 30-Second Version</h2>
+    <div class="anatomy-container" style="grid-template-columns: 1fr; gap: 24px;">
+      <div class="explanation-body" style="font-size: 16px; line-height: 1.7;">
+        <p style="margin-bottom: 16px;">
+          <strong>What is a "vulnerability"?</strong> It is a mistake in a program that an attacker could abuse to crash it, steal data, or take control. Think of it as an unlocked window in an otherwise secure house. The program still works normally, so you usually cannot see the problem just by running it.
+        </p>
+        <p style="margin-bottom: 16px;">
+          <strong>What does Sentinel do?</strong> You upload a program (or its source code). Sentinel pulls it apart, draws a map of how it works, and uses an AI trained on thousands of examples to check each part for these "unlocked windows." Then a second AI writes a plain-English report explaining what it found and how to fix it.
+        </p>
+        <p style="margin-bottom: 0;">
+          <strong>What do you get?</strong> A headline telling you how many parts were risky (for example, <em>"1 out of 2 functions were vulnerable"</em>), a list of each part marked Safe or Vulnerable, and a detailed report with fixes. The rest of this page explains every piece of that report.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- KEY WORD: FUNCTION -->
+  <section class="analogy-section reveal active" style="margin-top: -40px;">
+    <div class="anatomy-container" style="grid-template-columns: 1fr; gap: 0; background: var(--bg-card);">
+      <div class="explanation-body" style="font-size: 15px; line-height: 1.7;">
+        <p style="margin-bottom: 0;">
+          <strong>One word you'll see everywhere: "function."</strong> A function is a single named task inside a program, like one worker with one job. A program is built from many functions working together (for example, <code>main</code> starts the program, <code>process_user</code> might handle a login). Sentinel checks each function separately, which is why the report talks about "X out of N functions."
+        </p>
+      </div>
+    </div>
+  </section>
+
   <!-- ANALOGIES SECTION -->
   <section class="analogy-section reveal active">
-    <h2 class="section-headline">The Four Core Metaphors</h2>
+    <h2 class="section-headline">How It Works: Four Simple Metaphors</h2>
+    <p style="text-align: center; color: var(--text-secondary); margin-bottom: 30px; margin-top: -15px;">
+      Sentinel works in four stages. Here is each one explained with an everyday comparison.
+    </p>
     <div class="analogy-grid">
       
       <!-- Card 1: Binary -->
@@ -413,6 +445,96 @@
     </div>
   </section>
 
+  <!-- READ YOUR REPORT TOP TO BOTTOM -->
+  <section class="analogy-section reveal active">
+    <h2 class="section-headline">Read Your Report, Top to Bottom</h2>
+    <p style="text-align: center; color: var(--text-secondary); margin-bottom: 40px; margin-top: -15px; max-width: 720px; margin-left: auto; margin-right: auto;">
+      Your report appears in this order. Follow along from top to bottom — each step below matches a block you will actually see on screen.
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+      <!-- Step 1: Headline -->
+      <div class="analogy-card" style="padding: 28px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom: 10px;">
+          <span style="flex-shrink:0; width:34px; height:34px; border-radius:50%; background: var(--accent-gradient); color:#fff; font-weight:800; display:flex; align-items:center; justify-content:center;">1</span>
+          <h3 class="analogy-card__title" style="margin:0;">The Headline</h3>
+        </div>
+        <p class="analogy-card__text">
+          The big line at the top, for example <strong>"1 out of 2 functions were vulnerable."</strong> This is the quick answer. The first number is how many functions look risky; the second is how many of your real functions were checked. <strong>0 out of N</strong> means nothing risky was found. Anything above 0 means at least one part needs your attention below.
+        </p>
+      </div>
+
+      <!-- Step 2: Counters -->
+      <div class="analogy-card" style="padding: 28px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom: 10px;">
+          <span style="flex-shrink:0; width:34px; height:34px; border-radius:50%; background: var(--accent-gradient); color:#fff; font-weight:800; display:flex; align-items:center; justify-content:center;">2</span>
+          <h3 class="analogy-card__title" style="margin:0;">The Three Counters</h3>
+        </div>
+        <p class="analogy-card__text">
+          Three boxes summarise the scan:
+        </p>
+        <ul style="margin: 10px 0 0 18px; color: var(--text-secondary); font-size: 15px; line-height: 1.7;">
+          <li><strong>Total Functions Evaluated</strong> — everything found inside the file.</li>
+          <li><strong>Actual Code Functions Scanned</strong> — the functions <em>you</em> wrote, which the AI actually analysed.</li>
+          <li><strong>Boilerplate &amp; Runtime Stubs Found</strong> — automatic setup code added by the compiler that you did not write. Sentinel skips these so they don't cause false alarms.</li>
+        </ul>
+      </div>
+
+      <!-- Step 3: Forensics -->
+      <div class="analogy-card" style="padding: 28px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom: 10px;">
+          <span style="flex-shrink:0; width:34px; height:34px; border-radius:50%; background: var(--accent-gradient); color:#fff; font-weight:800; display:flex; align-items:center; justify-content:center;">3</span>
+          <h3 class="analogy-card__title" style="margin:0;">Forensics (File Details)</h3>
+        </div>
+        <p class="analogy-card__text">
+          Identification details so you know exactly which file this report describes: the <strong>filename</strong>, a unique fingerprint called the <strong>SHA-256</strong> (change one byte of the file and this code changes completely), and timing stats showing how long each stage took. These do not indicate danger — they are for record-keeping.
+        </p>
+      </div>
+
+      <!-- Step 4: Function list -->
+      <div class="analogy-card" style="padding: 28px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom: 10px;">
+          <span style="flex-shrink:0; width:34px; height:34px; border-radius:50%; background: var(--accent-gradient); color:#fff; font-weight:800; display:flex; align-items:center; justify-content:center;">4</span>
+          <h3 class="analogy-card__title" style="margin:0;">The Function List (Category B)</h3>
+        </div>
+        <p class="analogy-card__text">
+          The heart of the report. Every function you wrote is listed with a badge:
+        </p>
+        <ul style="margin: 10px 0 0 18px; color: var(--text-secondary); font-size: 15px; line-height: 1.7;">
+          <li><span style="color: var(--safe-color); font-weight:700;">✅ Safe</span> — the AI did not find a known dangerous pattern in this function.</li>
+          <li><span style="color: var(--danger-color); font-weight:700;">⚠️ Vulnerable</span> — the AI recognised a risky pattern. A <strong>CWE</strong> code (explained further down) names the type of weakness.</li>
+        </ul>
+        <p class="analogy-card__text" style="margin-top: 12px;">
+          Focus your effort here on the functions marked Vulnerable.
+        </p>
+      </div>
+
+      <!-- Step 5: AI report -->
+      <div class="analogy-card" style="padding: 28px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom: 10px;">
+          <span style="flex-shrink:0; width:34px; height:34px; border-radius:50%; background: var(--accent-gradient); color:#fff; font-weight:800; display:flex; align-items:center; justify-content:center;">5</span>
+          <h3 class="analogy-card__title" style="margin:0;">The AI Security Report</h3>
+        </div>
+        <p class="analogy-card__text">
+          A written report generated by AI. It contains, in order:
+        </p>
+        <ul style="margin: 10px 0 0 18px; color: var(--text-secondary); font-size: 15px; line-height: 1.7;">
+              <li><strong>Audit Metadata</strong> — the same file details and result summary, in writing.</li>
+          <li><strong>Risk Level</strong> — a colour rating (Green/Yellow/Orange/Red) based on what share of functions were risky.</li>
+          <li><strong>Executive Summary</strong> — a short paragraph summarising the result in plain words.</li>
+          <li><strong>Category B details</strong> — each function with its weakness, root cause, and a direction for the fix.</li>
+          <li><strong>General Mitigations</strong> — protective compiler settings worth turning on regardless.</li>
+          <li><strong>Category A</strong> — the skipped boilerplate, listed for completeness.</li>
+        </ul>
+        <p class="analogy-card__text" style="margin-top: 12px;">
+          You can also download this as a PDF using the button above the report.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
   <!-- REPORT EXPLORER SECTION -->
   <section class="anatomy-section reveal active">
     <h2 class="section-headline">Interactive Report Anatomy</h2>
@@ -425,11 +547,21 @@
       <!-- Mockup Column -->
       <div class="report-mockup">
         
-        <!-- Element 1: Verdict -->
-        <div class="mock-element selected" onclick="selectElement('verdict')" id="el-verdict">
-          <div class="mock-element__label">Verdict Box</div>
-          <div style="font-weight: 700; color: var(--danger-color); font-size: 16px; margin-bottom: 4px;">⚠️ VULNERABLE</div>
-          <div style="font-size: 11px; color: var(--text-secondary);">Critical vulnerability signatures detected. Immediate remediation recommended.</div>
+        <!-- Element 1: Result Headline -->
+        <div class="mock-element selected" onclick="selectElement('headline')" id="el-headline">
+          <div class="mock-element__label">Result Headline</div>
+          <div style="font-weight: 700; color: var(--danger-color); font-size: 16px; margin-bottom: 4px;">1 out of 2 functions were vulnerable</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">The quick answer at the very top of the report.</div>
+        </div>
+
+        <!-- Element 1b: Function Cards -->
+        <div class="mock-element" onclick="selectElement('functions')" id="el-functions">
+          <div class="mock-element__label">Function List</div>
+          <div style="font-size: 12px; color: var(--text-primary); margin-bottom: 4px;">
+            <span style="font-weight:700;">main</span>
+            <span style="margin-left:6px; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 700; background: rgba(244, 67, 54, 0.2); color: #F44336;">⚠️ Vulnerable</span>
+          </div>
+          <div style="font-size: 11px; color: var(--text-secondary);">CWE: CWE-119 &bull; click to learn what this means</div>
         </div>
 
         <!-- Element 2: Risk Level -->
@@ -446,20 +578,30 @@
 
         <!-- Element 3: Labeled List -->
         <div class="mock-element" onclick="selectElement('metadata')" id="el-metadata">
-          <div class="mock-element__label">Forensic Metadata</div>
+          <div class="mock-element__label">Forensics</div>
           <div style="font-size: 12px; font-family: monospace; line-height: 1.5; color: var(--text-secondary);">
             • Filename: test_login.exe<br/>
             • SHA-256: 3a2c9f1b...<br/>
-            • Evaluated: 12 functions
+            • Scan Time: 12.4s
           </div>
         </div>
 
         <!-- Element 4: Remediation -->
         <div class="mock-element" onclick="selectElement('remediation')" id="el-remediation">
-          <div class="mock-element__label">Secure Code Fix</div>
-          <div style="font-size: 11px; font-family: monospace; padding: 8px; background: rgba(0,0,0,0.4); border-left: 3px solid var(--safe-color); border-radius: 4px; color: var(--safe-color);">
-            // Secure rewrite using strncat<br/>
-            strncat(dest, src, sizeof(dest) - strlen(dest) - 1);
+          <div class="mock-element__label">Fix Direction</div>
+          <div style="font-size: 11px; line-height: 1.5; color: var(--text-secondary);">
+            <strong style="color: var(--text-primary);">Threat:</strong> CWE-119<br/>
+            <strong style="color: var(--text-primary);">Fix Direction:</strong> Add a bounds check before copying into the buffer.
+          </div>
+        </div>
+
+        <!-- Element 5: Categories -->
+        <div class="mock-element" onclick="selectElement('categories')" id="el-categories">
+          <div class="mock-element__label">Function Categories</div>
+          <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--text-primary);">Category A vs B</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">
+            • 8 Boilerplate Filtered (Cat A)<br/>
+            • 2 Actual Scanned (Cat B)
           </div>
         </div>
         
@@ -473,17 +615,32 @@
           <p style="margin-top: 10px; font-size: 14px;">Click on any section of the mockup report to reveal its non-technical explanation and real-world significance.</p>
         </div>
 
-        <!-- Verdict Explanation -->
-        <div class="explanation-content" id="exp-verdict">
-          <div class="explanation-title">🚨 The Verdict Box</div>
-          <div class="explanation-metaphor">Metaphor: The Safety Flag</div>
+        <!-- Headline Explanation -->
+        <div class="explanation-content" id="exp-headline">
+          <div class="explanation-title">🎯 The Result Headline</div>
+          <div class="explanation-metaphor">Metaphor: The Scoreboard</div>
           <div class="explanation-body">
-            <p>The **Verdict** is the final "Yes or No" outcome of the entire scan.</p>
+            <p>The headline is the quick answer at the very top, written as <strong>"X out of N functions were vulnerable."</strong></p>
             <ul>
-              <li><strong>SAFE</strong>: The AI scanned the entire application map and found no dangerous roads. It is ready for deployment.</li>
-              <li><strong>VULNERABLE</strong>: The AI found at least one function containing structure patterns that represent a known security threat. It means the code needs to be modified before releasing.</li>
+              <li><strong>X</strong> = how many of your functions look risky.</li>
+              <li><strong>N</strong> = how many of your real functions were checked.</li>
             </ul>
-            <p><em>Analogy: Like a traffic light. Green means safe to go; Red means stop and fix the hazards.</em></p>
+            <p><strong>0 out of N</strong> means nothing risky was found. Any number above 0 means you have functions to review in the list below.</p>
+            <p><em>Analogy: Like a scoreboard — it tells you the result instantly, then the rest of the report shows the play-by-play.</em></p>
+          </div>
+        </div>
+
+        <!-- Function List Explanation -->
+        <div class="explanation-content" id="exp-functions">
+          <div class="explanation-title">📋 The Function List</div>
+          <div class="explanation-metaphor">Metaphor: The Health Check-up Results</div>
+          <div class="explanation-body">
+            <p>Every function you wrote gets its own row with a badge, like results from a medical check-up where each organ is checked separately:</p>
+            <ul>
+              <li><strong style="color: var(--safe-color);">✅ Safe</strong>: No known dangerous pattern was found in this function.</li>
+              <li><strong style="color: var(--danger-color);">⚠️ Vulnerable</strong>: A risky pattern was recognised. A <strong>CWE</strong> code names the weakness type (see the CWE section below).</li>
+            </ul>
+            <p>Spend your time on the functions marked Vulnerable — those are the ones that may need fixing.</p>
           </div>
         </div>
 
@@ -505,31 +662,72 @@
 
         <!-- Metadata Explanation -->
         <div class="explanation-content" id="exp-metadata">
-          <div class="explanation-title">🔍 Forensic Metadata</div>
-          <div class="explanation-metaphor">Metaphor: The Car's License Plate & Diagnostic Stats</div>
+          <div class="explanation-title">🔍 Forensics</div>
+          <div class="explanation-metaphor">Metaphor: The File's ID Card & Receipt</div>
           <div class="explanation-body">
-            <p>This section lists identification details for the file under analysis:</p>
+            <p>Identification details so you know exactly which file this report describes. These do <strong>not</strong> indicate danger:</p>
             <ul>
               <li><strong>Filename</strong>: The name of the file you uploaded.</li>
-              <li><strong>SHA-256 Checksum</strong>: A unique, mathematically generated signature. Think of it as a digital fingerprint—even changing a single letter in the file changes this code completely, proving the report matches this exact file.</li>
-              <li><strong>Evaluated Functions</strong>: The total count of logical tasks/functions inside the binary that the GNN inspector scanned.</li>
+              <li><strong>SHA-256 Checksum</strong>: A unique digital fingerprint. Change a single byte of the file and this code changes completely, proving the report matches this exact file.</li>
+              <li><strong>Decompile / Inference / Total Time</strong>: How long each stage took — useful context, like a receipt showing the work done.</li>
             </ul>
           </div>
         </div>
 
         <!-- Remediation Explanation -->
         <div class="explanation-content" id="exp-remediation">
-          <div class="explanation-title">🛠️ Secure Code Fix</div>
-          <div class="explanation-metaphor">Metaphor: The Road Reconstruction Blueprint</div>
+          <div class="explanation-title">🛠️ Fix Direction</div>
+          <div class="explanation-metaphor">Metaphor: The Repair Instructions</div>
           <div class="explanation-body">
-            <p>This is the most actionable part of the report. For every flagged vulnerability, the RAG assistant displays a block of **corrected source code**.</p>
-            <p>It shows developers exactly how to write the function securely (for example, replacing an unsafe, unchecked function like <code>strcpy</code> with a safe, bounded copy like <code>strncat</code>).</p>
-            <p>By implementing this fix, developers remove the weak spot and secure the application.</p>
+            <p>For every flagged function, the AI report gives a short, practical breakdown:</p>
+            <ul>
+              <li><strong>Threat ID</strong>: the CWE weakness type.</li>
+              <li><strong>Root Cause</strong>: why it is risky in one line.</li>
+              <li><strong>CERT C Rule Violated</strong>: the official coding rule it breaks.</li>
+              <li><strong>Fix Direction</strong>: a one-line pointer on how to repair it.</li>
+            </ul>
+            <p>Need a full corrected code example? Open the in-app chat assistant and ask it about the flagged function — it can walk you through a secure rewrite.</p>
+          </div>
+        </div>
+
+        <!-- Categories Explanation -->
+        <div class="explanation-content" id="exp-categories">
+          <div class="explanation-title">🗂️ Category A vs B</div>
+          <div class="explanation-metaphor">Metaphor: The Packaging vs The Product</div>
+          <div class="explanation-body">
+            <p>When you compile a program, the compiler injects a lot of "invisible" setup code (like <code>_init</code> or <code>_start_c</code>) that you never wrote. Sentinel AI separates these so they don't trigger false alarms.</p>
+            <ul>
+              <li><strong>Category A (Boilerplate)</strong>: The "packaging" (startup stubs, library wrappers). These are filtered out and ignored by the vulnerability scanner.</li>
+              <li><strong>Category B (Actual Code)</strong>: The "product" (the actual logic functions you wrote like <code>main</code> or <code>process_user</code>). These are heavily analyzed.</li>
+            </ul>
           </div>
         </div>
 
       </div>
 
+    </div>
+  </section>
+
+  <!-- WHAT IS A CWE -->
+  <section class="analogy-section reveal active">
+    <h2 class="section-headline">What Is a "CWE"?</h2>
+    <div class="anatomy-container" style="grid-template-columns: 1fr; gap: 24px;">
+      <div class="explanation-body" style="font-size: 16px; line-height: 1.7;">
+        <p style="margin-bottom: 16px;">
+          When a function is flagged, the report attaches a code like <code>CWE-119</code> or <code>CWE-787</code>. <strong>CWE stands for "Common Weakness Enumeration"</strong> — a public, industry-standard catalogue of software weakness types maintained by the security community. Think of it like a medical diagnosis code: instead of "something is wrong," it tells you <em>exactly which</em> known problem it is, so anyone in the world can look it up and understand it the same way.
+        </p>
+        <p style="margin-bottom: 16px;">
+          A CWE does <strong>not</strong> mean your program was hacked. It means this function contains a pattern that is known to be dangerous if left unfixed. A few you may see:
+        </p>
+        <ul style="margin: 0 0 16px 18px; color: var(--text-secondary); font-size: 15px; line-height: 1.8;">
+          <li><strong>CWE-119 / CWE-787 (Memory / Out-of-bounds Write)</strong> — the program may write data outside the space reserved for it, like pouring more water than a glass can hold.</li>
+          <li><strong>CWE-120 (Buffer Overflow / unchecked copy)</strong> — copying data without checking if it fits.</li>
+          <li><strong>CWE-134 (Format String)</strong> — letting untrusted input control how text is formatted.</li>
+        </ul>
+        <p style="margin-bottom: 0;">
+          You can search any code at <strong>cwe.mitre.org</strong> for a full description and real-world examples.
+        </p>
+      </div>
     </div>
   </section>
 
@@ -587,6 +785,54 @@
     </div>
   </section>
 
+  <!-- WHAT DO I DO NOW -->
+  <section class="analogy-section reveal active">
+    <h2 class="section-headline">What Do I Do Now?</h2>
+    <p style="text-align: center; color: var(--text-secondary); margin-bottom: 40px; margin-top: -15px;">
+      A simple plan once your report is ready.
+    </p>
+    <div class="analogy-grid">
+      <div class="analogy-card">
+        <span class="analogy-card__icon">1️⃣</span>
+        <h3 class="analogy-card__title">Check the headline</h3>
+        <p class="analogy-card__text">If it says <strong>0 out of N</strong>, no risky functions were found — you can move on. If it is above 0, continue below.</p>
+      </div>
+      <div class="analogy-card">
+        <span class="analogy-card__icon">2️⃣</span>
+        <h3 class="analogy-card__title">Open each Vulnerable function</h3>
+        <p class="analogy-card__text">In the function list, note which ones are marked Vulnerable and read their CWE and Fix Direction in the AI report.</p>
+      </div>
+      <div class="analogy-card">
+        <span class="analogy-card__icon">3️⃣</span>
+        <h3 class="analogy-card__title">Ask the chat assistant</h3>
+        <p class="analogy-card__text">Not sure how to fix it? Use the in-app chat to ask for a secure rewrite of that specific function in plain language.</p>
+      </div>
+      <div class="analogy-card">
+        <span class="analogy-card__icon">4️⃣</span>
+        <h3 class="analogy-card__title">Harden &amp; re-scan</h3>
+        <p class="analogy-card__text">Apply the fix, enable the compiler hardening flags above, rebuild, and upload again to confirm the headline improved.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- GLOSSARY -->
+  <section class="analogy-section reveal active">
+    <h2 class="section-headline">Quick Glossary</h2>
+    <div class="anatomy-container" style="grid-template-columns: 1fr; gap: 0;">
+      <div class="explanation-body" style="font-size: 15px; line-height: 1.8;">
+        <p style="margin-bottom: 12px;"><strong>Binary</strong> — a compiled program a computer can run (e.g. <code>.exe</code> or <code>.o</code>), not readable by humans directly.</p>
+        <p style="margin-bottom: 12px;"><strong>Function</strong> — one named task inside a program. Sentinel checks each separately.</p>
+        <p style="margin-bottom: 12px;"><strong>Vulnerability</strong> — a coding mistake an attacker could abuse.</p>
+        <p style="margin-bottom: 12px;"><strong>CWE</strong> — a standard code naming the <em>type</em> of weakness found.</p>
+        <p style="margin-bottom: 12px;"><strong>CFG (Control Flow Graph)</strong> — a map of all the paths a program can take while running.</p>
+        <p style="margin-bottom: 12px;"><strong>GNN</strong> — the AI "inspector" that studies the map and spots dangerous shapes.</p>
+        <p style="margin-bottom: 12px;"><strong>Boilerplate / Runtime Stub</strong> — automatic setup code added by the compiler; skipped by the scanner.</p>
+        <p style="margin-bottom: 12px;"><strong>SHA-256</strong> — a unique fingerprint that identifies your exact file.</p>
+        <p style="margin-bottom: 0;"><strong>Risk Level</strong> — a Green/Yellow/Orange/Red rating based on the share of functions flagged.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- BACK BUTTON -->
   <div class="guide-actions" style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
     <a href="/dashboard" class="btn--back">
@@ -638,7 +884,7 @@
   
   // Set default selection
   document.addEventListener('DOMContentLoaded', () => {
-    selectElement('verdict');
+    selectElement('headline');
     setupThemeToggle();
   });
 </script>

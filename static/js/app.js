@@ -274,7 +274,13 @@ function setupEventListeners() {
   removeFileBtn.addEventListener('click', clearFile);
   analyzeBtn.addEventListener('click', startAnalysis);
   newScanBtn.addEventListener('click', resetUI);
-  if (exportPdfBtn) exportPdfBtn.addEventListener('click', exportToPdf);
+  if (exportPdfBtn) exportPdfBtn.addEventListener('click', () => {
+    if (lastResult && lastResult.pdf_url) {
+      window.open(lastResult.pdf_url, '_blank');
+    } else {
+      alert('No PDF report is available for this scan.');
+    }
+  });
   
   const clearBtn = document.getElementById('clearHistoryBtn');
   if (clearBtn) {
@@ -726,20 +732,6 @@ function displayResults(data, restoreChat = false) {
     });
   } else {
     featureList.innerHTML = '<div style="color: #86868b; font-size: 14px;">No actual code functions found.</div>';
-  }
-
-  // --- Render Category A (Boilerplate & Runtime Stubs) ---
-  const boilerplateList = document.getElementById('boilerplateList');
-  if (boilerplateList) {
-    if (data.category_a_functions && data.category_a_functions.length > 0) {
-      const names = data.category_a_functions.map(f => `<code style="background: rgba(128,128,128,0.15); padding: 2px 8px; border-radius: 4px; font-size: 13px; margin: 3px;">${escapeHtml(f.function_name)}</code>`);
-      boilerplateList.innerHTML = `
-        <p style="margin-bottom: 10px; color: var(--text-secondary);">These ${data.category_a_functions.length} functions are compiler-generated boilerplate, CRT startup stubs, or standard library wrappers. They were excluded from vulnerability analysis.</p>
-        <div style="display: flex; flex-wrap: wrap; gap: 4px;">${names.join('')}</div>
-      `;
-    } else {
-      boilerplateList.innerHTML = '<div style="color: #86868b; font-size: 14px;">No boilerplate functions detected.</div>';
-    }
   }
 
   if (exportPdfBtn) exportPdfBtn.style.display = 'block';
